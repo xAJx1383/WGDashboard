@@ -29,7 +29,7 @@ fi
 
 dashes='---------------------------------------------------------------------------------'
 equals='============================================================'
-helpMsg="[WGDashboard] Please check ./log/install.txt for more details. For further assistance, please open a ticket on https://github.com/WGDashboard/WGDashboard/issues/new/choose, I'm more than happy to help :)"
+helpMsg="[WGDashboard] Please check ./log/install.txt for more details. For further assistance, please open a ticket on https://github.com/xAJx1383/WGDashboard/issues/new/choose, I'm more than happy to help :)"
 print_header(){
 	printf "=================================================================================\n"
 	printf "+          <WGDashboard> by Donald Zou - https://github.com/donaldzou           +\n"
@@ -503,7 +503,7 @@ update_wgd() {
 
 		mv wgd.sh wgd.sh.old
 		printf "[WGDashboard] Downloading %s from GitHub..." "$new_ver"
-		{ date; git stash; git pull https://github.com/WGDashboard/WGDashboard.git $new_ver --force; } >> ./log/update.txt
+		{ date; git stash; git pull https://github.com/xAJx1383/WGDashboard.git $new_ver --force; } >> ./log/update.txt
 		chmod +x ./wgd.sh
 		sudo ./wgd.sh install
 		printf "[WGDashboard] Update completed!\n"
