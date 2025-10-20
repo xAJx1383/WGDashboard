@@ -503,7 +503,7 @@ update_wgd() {
 
 		mv wgd.sh wgd.sh.old
 		printf "[WGDashboard] Downloading %s from GitHub..." "$new_ver"
-		{ date; git stash; git pull https://github.com/xAJx1383/WGDashboard.git $new_ver --force; } >> ./log/update.txt
+		{ date; git stash; git pull https://github.com/xAJx1383/WGDashboard.git --force; } >> ./log/update.txt
 		chmod +x ./wgd.sh
 		sudo ./wgd.sh install
 		printf "[WGDashboard] Update completed!\n"
