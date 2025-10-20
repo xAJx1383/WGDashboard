@@ -208,12 +208,12 @@ class PeerJobs:
 
                         if runAction:
                             # EMERGENCY FIX: DISABLE ALL DESTRUCTIVE ACTIONS
-                            current_app.logger.error(f"!!! EMERGENCY: Job {job.JobID} would perform '{job.Action}' on peer {fp.id} - ACTION BLOCKED FOR SAFETY !!!")
-                            current_app.logger.error(f"!!! Job details: Field={job.Field}, Operator={job.Operator}, Value={job.Value}")
+                            # current_app.logger.error(f"!!! EMERGENCY: Job {job.JobID} would perform '{job.Action}' on peer {fp.id} - ACTION BLOCKED FOR SAFETY !!!")
+                            # current_app.logger.error(f"!!! Job details: Field={job.Field}, Operator={job.Operator}, Value={job.Value}")
                             
                             # DO NOT EXECUTE ANY ACTIONS - JUST LOG
                             # Comment out all action execution until we understand why jobs are triggering
-                            """
+                            
                             s = False
                             msg = ""
                             if job.Action == "restrict":
@@ -237,7 +237,7 @@ class PeerJobs:
                                 self.JobLogger.log(job.JobID, s,
                                             f"Peer {fp.id} from {c.Name} failed to {job.Action}. Reason: {msg}"
                                             )
-                            """
+                            
                     else:
                         current_app.logger.warning(f"Can't find peer {job.Peer} in configuration {c.Name}")
                         self.JobLogger.log(job.JobID, False,
