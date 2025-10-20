@@ -148,13 +148,21 @@ class PeerJobs:
         current_app.logger.info("Running scheduled jobs")
         needToDelete = []
         self.__getJobs()
+        
+        # EMERGENCY: Log all jobs to understand what's happening
+        for job in self.Jobs:
+            current_app.logger.warning(f"Active Job: ID={job.JobID}, Peer={job.Peer}, Field={job.Field}, Operator={job.Operator}, Value={job.Value}, Action={job.Action}")
+        
         for job in self.Jobs:
             try:
                 c = self.WireguardConfigurations.get(job.Configuration)
                 if c is not None:
                     f, fp = c.searchPeer(job.Peer)
-                    if f:
+                    if f and fp is not None:
                         runAction = False
+                        
+                        # Log what we're comparing BEFORE the comparison
+                        current_app.logger.warning(f"Evaluating job {job.JobID} for peer {fp.id}: Field={job.Field}, Operator={job.Operator}, Value={job.Value}")
                         
                         # Handle data usage fields (these are numeric)
                         if job.Field in ["total_receive", "total_sent", "total_data"]:
@@ -163,6 +171,7 @@ class PeerJobs:
                             try:
                                 y = float(job.Value)
                                 runAction = self.__runJob_Compare(x, y, job.Operator)
+                                current_app.logger.warning(f"Data comparison result: {x} {job.Operator} {y} = {runAction}")
                             except ValueError:
                                 current_app.logger.error(f"Invalid numeric value for job {job.JobID}: {job.Value}")
                                 self.JobLogger.log(job.JobID, False, f"Invalid numeric value: {job.Value}")
@@ -178,65 +187,70 @@ class PeerJobs:
                                 is_datetime_comparison = True
                                 x = datetime.now()
                                 runAction = self.__runJob_Compare(x, y_datetime, job.Operator)
+                                current_app.logger.warning(f"DateTime comparison result: {x} {job.Operator} {y_datetime} = {runAction}")
                             except ValueError:
                                 # Not a datetime, treat as string comparison
                                 pass
                             
-                            if not is_datetime_comparison:
-                                # Handle as string/other type comparison
-                                # Try to get the field value from the peer object
-                                if hasattr(fp, job.Field):
-                                    peer_value = getattr(fp, job.Field)
-                                    # Convert both to strings for comparison
-                                    runAction = self.__runJob_Compare(str(peer_value), str(job.Value), job.Operator)
-                                else:
-                                    current_app.logger.warning(f"Field '{job.Field}' not found on peer object for job {job.JobID}")
-                                    self.JobLogger.log(job.JobID, False, f"Field '{job.Field}' not found on peer object")
-                                    continue
+                            # if not is_datetime_comparison:
+                            #     # Handle as string/other type comparison
+                            #     # Try to get the field value from the peer object
+                            #     if hasattr(fp, job.Field):
+                            #         peer_value = getattr(fp, job.Field)
+                            #         # Convert both to strings for comparison
+                            #         current_app.logger.warning(f"String comparison for field '{job.Field}': peer_value='{peer_value}' {job.Operator} job_value='{job.Value}'")
+                            #         runAction = self.__runJob_Compare(str(peer_value), str(job.Value), job.Operator)
+                            #         current_app.logger.warning(f"String comparison result: '{peer_value}' {job.Operator} '{job.Value}' = {runAction}")
+                            #     else:
+                            #         current_app.logger.warning(f"Field '{job.Field}' not found on peer object for job {job.JobID}")
+                            #         self.JobLogger.log(job.JobID, False, f"Field '{job.Field}' not found on peer object")
+                            #         continue
 
                         if runAction:
+                            # EMERGENCY FIX: DISABLE ALL DESTRUCTIVE ACTIONS
+                            current_app.logger.error(f"!!! EMERGENCY: Job {job.JobID} would perform '{job.Action}' on peer {fp.id} - ACTION BLOCKED FOR SAFETY !!!")
+                            current_app.logger.error(f"!!! Job details: Field={job.Field}, Operator={job.Operator}, Value={job.Value}")
+                            
+                            # DO NOT EXECUTE ANY ACTIONS - JUST LOG
+                            # Comment out all action execution until we understand why jobs are triggering
+                            """
                             s = False
                             msg = ""
                             if job.Action == "restrict":
-                                # Pass self as AllPeerJobs and the stored AllPeerShareLinks
                                 s, msg = c.restrictPeers([fp.id], self, self.AllPeerShareLinks)
                             elif job.Action == "delete":
-                                # Pass self as AllPeerJobs and the stored AllPeerShareLinks
                                 s, msg = c.deletePeers([fp.id], self, self.AllPeerShareLinks)
                             elif job.Action == "reset_total_data_usage":
                                 s = fp.resetDataUsage("total")
-                                # These might also need the additional arguments
                                 c.restrictPeers([fp.id], self, self.AllPeerShareLinks)
                                 c.allowAccessPeers([fp.id], self, self.AllPeerShareLinks)
                                 msg = "Data usage reset"
                             
                             if s is True:
                                 self.JobLogger.log(job.JobID, s,
-                                              f"Peer {fp.id} from {c.Name} is successfully {job.Action}ed."
-                                              )
+                                            f"Peer {fp.id} from {c.Name} is successfully {job.Action}ed."
+                                            )
                                 current_app.logger.info(f"Peer {fp.id} from {c.Name} is successfully {job.Action}ed.")
                                 needToDelete.append(job)
                             else:
                                 current_app.logger.info(f"Peer {fp.id} from {c.Name} failed to {job.Action}. Reason: {msg}")
                                 self.JobLogger.log(job.JobID, s,
-                                              f"Peer {fp.id} from {c.Name} failed to {job.Action}. Reason: {msg}"
-                                              )
+                                            f"Peer {fp.id} from {c.Name} failed to {job.Action}. Reason: {msg}"
+                                            )
+                            """
                     else:
                         current_app.logger.warning(f"Can't find peer {job.Peer} in configuration {c.Name}")
                         self.JobLogger.log(job.JobID, False,
-                                      f"Can't find peer {job.Peer} in configuration {c.Name}"
-                                      )
+                                    f"Can't find peer {job.Peer} in configuration {c.Name}"
+                                    )
                 else:
                     current_app.logger.warning(f"Can't find configuration {job.Configuration}")
                     self.JobLogger.log(job.JobID, False,
-                                  f"Can't find configuration {job.Configuration}"
-                                  )
+                                f"Can't find configuration {job.Configuration}"
+                                )
             except Exception as e:
                 current_app.logger.error(f"Error processing job {job.JobID}: {str(e)}")
                 self.JobLogger.log(job.JobID, False, f"Error processing job: {str(e)}")
-                
-        for j in needToDelete:
-            self.deleteJob(j)
 
     def __runJob_Compare(self, x, y, operator: str):
         """
