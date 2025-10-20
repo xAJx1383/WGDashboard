@@ -9,7 +9,7 @@ from datetime import datetime
 from flask import current_app
 
 class PeerJobs:
-    def __init__(self, DashboardConfig, WireguardConfigurations):
+    def __init__(self, DashboardConfig, WireguardConfigurations, AllPeerShareLinks=None):
         self.Jobs: list[PeerJob] = []
         self.engine = db.create_engine(ConnectionString('wgdashboard_job'))
         self.metadata = db.MetaData()
@@ -28,6 +28,11 @@ class PeerJobs:
         self.__getJobs()
         self.JobLogger: PeerJobLogger = PeerJobLogger(self, DashboardConfig)
         self.WireguardConfigurations = WireguardConfigurations
+        self.AllPeerShareLinks = AllPeerShareLinks  # Store the reference
+
+    def setAllPeerShareLinks(self, AllPeerShareLinks):
+        """Method to set AllPeerShareLinks after initialization if needed"""
+        self.AllPeerShareLinks = AllPeerShareLinks
 
     def __getJobs(self):
         self.Jobs.clear()
@@ -193,13 +198,16 @@ class PeerJobs:
                             s = False
                             msg = ""
                             if job.Action == "restrict":
-                                s, msg = c.restrictPeers([fp.id])
+                                # Pass self as AllPeerJobs and the stored AllPeerShareLinks
+                                s, msg = c.restrictPeers([fp.id], self, self.AllPeerShareLinks)
                             elif job.Action == "delete":
-                                s, msg = c.deletePeers([fp.id])
+                                # Pass self as AllPeerJobs and the stored AllPeerShareLinks
+                                s, msg = c.deletePeers([fp.id], self, self.AllPeerShareLinks)
                             elif job.Action == "reset_total_data_usage":
                                 s = fp.resetDataUsage("total")
-                                c.restrictPeers([fp.id])
-                                c.allowAccessPeers([fp.id])
+                                # These might also need the additional arguments
+                                c.restrictPeers([fp.id], self, self.AllPeerShareLinks)
+                                c.allowAccessPeers([fp.id], self, self.AllPeerShareLinks)
                                 msg = "Data usage reset"
                             
                             if s is True:
@@ -230,22 +238,22 @@ class PeerJobs:
         for j in needToDelete:
             self.deleteJob(j)
 
-def __runJob_Compare(self, x, y, operator: str):
-    """
-    Compare two values based on the operator.
-    Handles float, datetime, and string comparisons.
-    """
-    try:
-        if operator == "eq":
-            return x == y
-        if operator == "neq":
-            return x != y
-        if operator == "lgt":
-            return x > y
-        if operator == "lst":
-            return x < y
-    except TypeError:
-        # If comparison fails (e.g., comparing incompatible types), 
-        # try string comparison
-        return self.__runJob_Compare(str(x), str(y), operator)
-    return False
+    def __runJob_Compare(self, x, y, operator: str):
+        """
+        Compare two values based on the operator.
+        Handles float, datetime, and string comparisons.
+        """
+        try:
+            if operator == "eq":
+                return x == y
+            if operator == "neq":
+                return x != y
+            if operator == "lgt":
+                return x > y
+            if operator == "lst":
+                return x < y
+        except TypeError:
+            # If comparison fails (e.g., comparing incompatible types), 
+            # try string comparison
+            return self.__runJob_Compare(str(x), str(y), operator)
+        return False
