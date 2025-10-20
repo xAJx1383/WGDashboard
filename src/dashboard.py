@@ -115,7 +115,7 @@ def peerJobScheduleBackgroundThread():
                 AllPeerJobs.runJob()
                 time.sleep(180)
             except Exception as e:
-                app.logger.error("Background Thread #2 Error", e)
+                app.logger.error(f"Background Thread #2 Error:" , e)
 
 def gunicornConfig():
     _, app_ip = DashboardConfig.GetConfig("Server", "app_ip")
@@ -194,7 +194,7 @@ with app.app_context():
     DashboardConfig = DashboardConfig()
     EmailSender = EmailSender(DashboardConfig)
     AllPeerShareLinks: PeerShareLinks = PeerShareLinks(DashboardConfig, WireguardConfigurations)
-    AllPeerJobs: PeerJobs = PeerJobs(DashboardConfig, WireguardConfigurations)
+    AllPeerJobs: PeerJobs = PeerJobs(DashboardConfig, WireguardConfigurations, AllPeerShareLinks)
     DashboardLogger: DashboardLogger = DashboardLogger()
     DashboardPlugins: DashboardPlugins = DashboardPlugins(app, WireguardConfigurations)
     DashboardWebHooks: DashboardWebHooks = DashboardWebHooks(DashboardConfig)
