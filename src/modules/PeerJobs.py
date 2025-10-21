@@ -7,6 +7,7 @@ from .PeerJobLogger import PeerJobLogger
 import sqlalchemy as db
 from datetime import datetime
 from flask import current_app
+import os
 
 class PeerJobs:
     def __init__(self, DashboardConfig, WireguardConfigurations, AllPeerShareLinks=None):
@@ -141,6 +142,26 @@ class PeerJobs:
         except Exception as e:
             return False, str(e)
     
+    def dumpJobsForConfiguration(self, configurationName: str) -> list[str]:
+        """
+        Dumps all active jobs for a given configuration as a list of SQL INSERT statements.
+        """
+        job_lines = []
+        with self.engine.connect() as conn:
+            jobs_for_config = conn.execute(
+                self.peerJobTable.select().where(
+                    self.peerJobTable.columns.Configuration == configurationName,
+                    self.peerJobTable.columns.ExpireDate.is_(None)
+                )
+            ).mappings().fetchall()
+
+            for job_row in jobs_for_config:
+                insert_stmt = self.peerJobTable.insert().values(dict(job_row))
+                job_lines.append(
+                    str(insert_stmt.compile(compile_kwargs={"literal_binds": True})) + ";"
+                )
+        return job_lines
+
     def getPeerJobLogs(self, configurationName):
         return self.JobLogger.getLogs(configurationName)
 
@@ -272,45 +293,6 @@ class PeerJobs:
             return self.__runJob_Compare(str(x), str(y), operator)
         return False
 
-# --- append or replace the importJobsFromFile and add dumpJobsForConfiguration in the PeerJobs class ---
-
-    def dumpJobsForConfiguration(self, configuration: str) -> list[str]:
-        """
-        Return a list of SQL INSERT lines for PeerJobs rows that belong to 'configuration'.
-        These are safe single-line INSERTs that can be saved to .jobs.sql.
-        """
-        import os
-        lines = []
-        with self.engine.connect() as conn:
-            rows = conn.execute(
-                self.peerJobTable.select().where(self.peerJobTable.c.Configuration == configuration)
-            ).mappings().fetchall()
-            for r in rows:
-                def esc(v):
-                    if v is None:
-                        return 'NULL'
-                    s = str(v)
-                    return "'" + s.replace("'", "''") + "'"
-
-                columns = [
-                    'JobID', 'Configuration', 'Peer', 'Field', 'Operator',
-                    'Value', 'CreationDate', 'ExpireDate', 'Action'
-                ]
-                vals = [
-                    esc(r.get('JobID')),
-                    esc(r.get('Configuration')),
-                    esc(r.get('Peer')),
-                    esc(r.get('Field')),
-                    esc(r.get('Operator')),
-                    esc(r.get('Value')),
-                    esc(r.get('CreationDate')) if r.get('CreationDate') is not None else 'NULL',
-                    esc(r.get('ExpireDate')) if r.get('ExpireDate') is not None else 'NULL',
-                    esc(r.get('Action'))
-                ]
-                line = f'INSERT INTO "{self.peerJobTable.name}" ({", ".join(columns)}) VALUES ({", ".join(vals)});'
-                lines.append(line)
-        return lines
-
     def importJobsFromFile(self, sql_path: str, merge: bool = True) -> tuple[bool, str]:
         """
         Read a .jobs.sql file (created by dumpJobsForConfiguration) and execute each INSERT line.
@@ -384,73 +366,12 @@ class PeerJobs:
                     except Exception as e:
                         # return the error to caller so it can be logged
                         return False, f"Error executing line: {line[:200]}... Error: {str(e)}"
-            return True, None
-        except Exception as e:
-            return False, str(e)
+            try:
+                self.__getJobs()
+            except Exception:
+                # don't break restore if reload somehow fails; return success but log if needed
+                pass
 
-    def importJobsFromFile(self, sql_path: str, merge: bool = True) -> tuple[bool, str]:
-        """
-        Read SQL from a file and execute INSERTs into the PeerJobs table.
-        If merge is True, skip INSERTs where JobID already exists (avoid duplicate).
-        If merge is False, try to insert and on conflict replace/update (database dependent).
-        Returns (True, None) or (False, error_message)
-        """
-        import re
-        from sqlalchemy import text
-
-        if not os.path.exists(sql_path):
-            return False, "jobs SQL file not found"
-
-        try:
-            with open(sql_path, 'r') as f:
-                content = f.read()
-            # Find INSERT statements referencing the PeerJobs table
-            inserts = re.findall(r'INSERT\s+INTO\s+"?%s"?\s*\((.*?)\)\s*VALUES\s*\((.*?)\);' % self.peerJobTable.name, content, flags=re.IGNORECASE | re.DOTALL)
-            with self.engine.begin() as conn:
-                for cols_raw, vals_raw in inserts:
-                    # Reconstruct columns and values lists more robustly
-                    cols = [c.strip().strip('"') for c in cols_raw.split(',')]
-                    # split values on commas not inside quotes - naive but works for our generated dumps
-                    # remove surrounding whitespace and outer quotes for null handling
-                    vals = []
-                    cur = ''
-                    in_quote = False
-                    for ch in vals_raw:
-                        if ch == "'" and not in_quote:
-                            in_quote = True
-                            cur += ch
-                        elif ch == "'" and in_quote:
-                            cur += ch
-                            in_quote = False
-                        elif ch == ',' and not in_quote:
-                            vals.append(cur.strip())
-                            cur = ''
-                        else:
-                            cur += ch
-                    if cur.strip() != '':
-                        vals.append(cur.strip())
-                    # map to dict for insert
-                    row = {}
-                    for c, v in zip(cols, vals):
-                        v = v.strip()
-                        if v.upper() == 'NULL':
-                            row[c] = None
-                        else:
-                            # unwrap single quotes and unescape single quotes
-                            if v.startswith("'") and v.endswith("'"):
-                                row[c] = v[1:-1].replace("''", "'")
-                            else:
-                                row[c] = v
-                    # If merge: skip if JobID exists
-                    if merge and 'JobID' in row:
-                        exists = conn.execute(
-                            self.peerJobTable.select().where(self.peerJobTable.c.JobID == row['JobID'])
-                        ).fetchone()
-                        if exists:
-                            # optionally, update existing record: here we skip to avoid overwriting
-                            continue
-                    # perform insert (use SQLAlchemy insert())
-                    conn.execute(self.peerJobTable.insert().values(row))
             return True, None
         except Exception as e:
             return False, str(e)
