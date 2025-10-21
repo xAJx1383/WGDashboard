@@ -892,16 +892,34 @@ class WireguardConfiguration:
         if not os.path.exists(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup')):
             os.mkdir(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup'))
         time = datetime.now().strftime("%Y%m%d%H%M%S")
+        conf_name = f'{self.Name}_{time}.conf'
+        sql_name = f'{self.Name}_{time}.sql'
+        jobs_sql_name = f'{self.Name}_{time}.jobs.sql'
+
         shutil.copy(
             self.configPath,
-            os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f'{self.Name}_{time}.conf')
+            os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', conf_name)
         )
-        with open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f'{self.Name}_{time}.sql'), 'w+') as f:
+
+        # dump configuration database (existing behavior)
+        with open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', sql_name), 'w+') as f:
             for l in self.__dumpDatabase():
                 f.write(l + "\n")
 
+        # dump peer jobs for this configuration (new behavior)
+        try:
+            if hasattr(self, 'AllPeerJobs') and self.AllPeerJobs is not None:
+                job_lines = self.AllPeerJobs.dumpJobsForConfiguration(self.Name)
+                if job_lines:
+                    with open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', jobs_sql_name), 'w+') as jf:
+                        for l in job_lines:
+                            jf.write(l + "\n")
+        except Exception:
+            # don't break backup if job dump fails; consider logging
+            pass
+
         return True, {
-            "filename": f'{self.Name}_{time}.conf',
+            "filename": conf_name,
             "backupDate": datetime.now().strftime("%Y%m%d%H%M%S")
         }
 
@@ -922,10 +940,16 @@ class WireguardConfiguration:
                     "backupDate": date,
                     "content": open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f), 'r').read()
                 }
-                if f.replace(".conf", ".sql") in list(os.listdir(directory)):
+                sql_file = f.replace(".conf", ".sql")
+                jobs_sql_file = f.replace(".conf", ".jobs.sql")
+                if sql_file in list(os.listdir(directory)):
                     d['database'] = True
                     if databaseContent:
-                        d['databaseContent'] = open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f.replace(".conf", ".sql")), 'r').read()
+                        d['databaseContent'] = open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', sql_file), 'r').read()
+                if jobs_sql_file in list(os.listdir(directory)):
+                    d['jobs'] = True
+                    if databaseContent:
+                        d['jobsContent'] = open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', jobs_sql_file), 'r').read()
                 backups.append(d)
 
         return backups
@@ -938,6 +962,7 @@ class WireguardConfiguration:
             self.toggleConfiguration()
         target = os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backupFileName)
         targetSQL = os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backupFileName.replace(".conf", ".sql"))
+        targetJobsSQL = os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backupFileName.replace(".conf", ".jobs.sql"))
         if not os.path.exists(target):
             return False
         targetContent = open(target, 'r').read()
@@ -947,7 +972,19 @@ class WireguardConfiguration:
         except Exception as e:
             return False
         self.__parseConfigurationFile()
+        # import configuration DB
         self.__importDatabase(targetSQL)
+        # import peer jobs (new)
+        try:
+            if os.path.exists(targetJobsSQL) and hasattr(self, 'AllPeerJobs') and self.AllPeerJobs is not None:
+                # import, merging by skipping duplicates by JobID
+                status, err = self.AllPeerJobs.importJobsFromFile(targetJobsSQL, merge=True)
+                if not status:
+                    # consider logging err
+                    pass
+        except Exception:
+            pass
+
         self.__initPeersList()
         return True
 
@@ -971,10 +1008,16 @@ class WireguardConfiguration:
                 os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backup[0]['filename']),
                 os.path.basename(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backup[0]['filename']))
             )
-            if backup[0]['database']:
+            if backup[0].get('database'):
                 zipF.write(
                     os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backup[0]['filename'].replace('.conf', '.sql')),
                     os.path.basename(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backup[0]['filename'].replace('.conf', '.sql')))
+                )
+            # include jobs SQL if present
+            if backup[0].get('jobs'):
+                zipF.write(
+                    os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backup[0]['filename'].replace('.conf', '.jobs.sql')),
+                    os.path.basename(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backup[0]['filename'].replace('.conf', '.jobs.sql')))
                 )
 
         return True, zip
