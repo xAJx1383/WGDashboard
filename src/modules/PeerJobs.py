@@ -272,18 +272,20 @@ class PeerJobs:
             return self.__runJob_Compare(str(x), str(y), operator)
         return False
 
+# --- append or replace the importJobsFromFile and add dumpJobsForConfiguration in the PeerJobs class ---
+
     def dumpJobsForConfiguration(self, configuration: str) -> list[str]:
         """
-        Return a list of SQL INSERT lines (strings) for PeerJobs rows that belong to 'configuration'.
-        This is a plain INSERT dump that can be saved to a .jobs.sql file and later executed.
+        Return a list of SQL INSERT lines for PeerJobs rows that belong to 'configuration'.
+        These are safe single-line INSERTs that can be saved to .jobs.sql.
         """
+        import os
         lines = []
         with self.engine.connect() as conn:
             rows = conn.execute(
                 self.peerJobTable.select().where(self.peerJobTable.c.Configuration == configuration)
             ).mappings().fetchall()
             for r in rows:
-                # Safe-string escaping for single quotes in values
                 def esc(v):
                     if v is None:
                         return 'NULL'
@@ -295,19 +297,96 @@ class PeerJobs:
                     'Value', 'CreationDate', 'ExpireDate', 'Action'
                 ]
                 vals = [
-                    esc(r['JobID']),
-                    esc(r['Configuration']),
-                    esc(r['Peer']),
-                    esc(r['Field']),
-                    esc(r['Operator']),
-                    esc(r['Value']),
-                    esc(r['CreationDate']) if r['CreationDate'] is not None else 'NULL',
-                    esc(r['ExpireDate']) if r['ExpireDate'] is not None else 'NULL',
-                    esc(r['Action'])
+                    esc(r.get('JobID')),
+                    esc(r.get('Configuration')),
+                    esc(r.get('Peer')),
+                    esc(r.get('Field')),
+                    esc(r.get('Operator')),
+                    esc(r.get('Value')),
+                    esc(r.get('CreationDate')) if r.get('CreationDate') is not None else 'NULL',
+                    esc(r.get('ExpireDate')) if r.get('ExpireDate') is not None else 'NULL',
+                    esc(r.get('Action'))
                 ]
                 line = f'INSERT INTO "{self.peerJobTable.name}" ({", ".join(columns)}) VALUES ({", ".join(vals)});'
                 lines.append(line)
         return lines
+
+    def importJobsFromFile(self, sql_path: str, merge: bool = True) -> tuple[bool, str]:
+        """
+        Read a .jobs.sql file (created by dumpJobsForConfiguration) and execute each INSERT line.
+        If merge=True, skip INSERTs whose JobID already exists.
+        Returns (True, None) on success or (False, "error message") on failure.
+        """
+        import os
+        from sqlalchemy import text
+
+        if not os.path.exists(sql_path):
+            return False, "jobs SQL file not found"
+
+        try:
+            with open(sql_path, 'r') as f:
+                lines = [line.strip() for line in f.readlines() if line.strip()]
+
+            if not lines:
+                return True, None  # nothing to do
+
+            with self.engine.begin() as conn:
+                for line in lines:
+                    # Only handle INSERT lines (our dump writes one INSERT per line)
+                    if not line.upper().startswith('INSERT'):
+                        continue
+
+                    # Optionally check JobID presence and skip if exists
+                    if merge:
+                        # attempt to parse JobID value quickly (works for our dumped format)
+                        import re
+                        m = re.search(r"VALUES\s*\((.*)\);?$", line, flags=re.IGNORECASE)
+                        if m:
+                            vals_raw = m.group(1)
+                            # split on commas outside quotes (simple)
+                            vals = []
+                            cur = ''
+                            in_q = False
+                            for ch in vals_raw:
+                                if ch == "'" and not in_q:
+                                    in_q = True
+                                    cur += ch
+                                elif ch == "'" and in_q:
+                                    cur += ch
+                                    in_q = False
+                                elif ch == ',' and not in_q:
+                                    vals.append(cur.strip())
+                                    cur = ''
+                                else:
+                                    cur += ch
+                            if cur.strip() != '':
+                                vals.append(cur.strip())
+                            # JobID is first column in our dump
+                            if len(vals) > 0:
+                                jobid_val = vals[0].strip()
+                                if jobid_val.upper() == 'NULL':
+                                    jobid = None
+                                else:
+                                    if jobid_val.startswith("'") and jobid_val.endswith("'"):
+                                        jobid = jobid_val[1:-1].replace("''", "'")
+                                    else:
+                                        jobid = jobid_val
+                                if jobid:
+                                    exists = conn.execute(
+                                        self.peerJobTable.select().where(self.peerJobTable.c.JobID == jobid)
+                                    ).first()
+                                    if exists:
+                                        # skip this insert to avoid duplicate JobID
+                                        continue
+                    # execute the INSERT
+                    try:
+                        conn.execute(text(line))
+                    except Exception as e:
+                        # return the error to caller so it can be logged
+                        return False, f"Error executing line: {line[:200]}... Error: {str(e)}"
+            return True, None
+        except Exception as e:
+            return False, str(e)
 
     def importJobsFromFile(self, sql_path: str, merge: bool = True) -> tuple[bool, str]:
         """
