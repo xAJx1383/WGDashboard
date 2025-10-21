@@ -974,16 +974,19 @@ class WireguardConfiguration:
         self.__parseConfigurationFile()
         # import configuration DB
         self.__importDatabase(targetSQL)
-        # import peer jobs (new)
-        try:
-            if os.path.exists(targetJobsSQL) and hasattr(self, 'AllPeerJobs') and self.AllPeerJobs is not None:
-                # import, merging by skipping duplicates by JobID
+
+        # import peer jobs (improved: capture and log import errors)
+        if os.path.exists(targetJobsSQL):
+            if not hasattr(self, 'AllPeerJobs') or self.AllPeerJobs is None:
+                # Not configured to manage jobs - log and continue
+                current_app.logger.warning(f"Jobs SQL present for backup {backupFileName} but AllPeerJobs is not configured, skipping jobs import.")
+            else:
                 status, err = self.AllPeerJobs.importJobsFromFile(targetJobsSQL, merge=True)
                 if not status:
-                    # consider logging err
-                    pass
-        except Exception:
-            pass
+                    # Log the detailed error so you see why jobs weren't restored
+                    current_app.logger.error(f"Failed importing jobs for backup {backupFileName}: {err}")
+                else:
+                    current_app.logger.info(f"Imported peer jobs from {os.path.basename(targetJobsSQL)} for configuration {self.Name}")
 
         self.__initPeersList()
         return True
