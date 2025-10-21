@@ -296,11 +296,13 @@ class PeerJobs:
     def importJobsFromFile(self, sql_path: str, merge: bool = True) -> tuple[bool, str]:
         """
         Read a .jobs.sql file (created by dumpJobsForConfiguration) and execute each INSERT line.
-        If merge=True, skip INSERTs whose JobID already exists.
+        If merge=True, it handles conflicts by deleting the existing job record before inserting
+        the new one, which is crucial for restoring previously deleted (expired) jobs.
         Returns (True, None) on success or (False, "error message") on failure.
         """
         import os
         from sqlalchemy import text
+        import re
 
         if not os.path.exists(sql_path):
             return False, "jobs SQL file not found"
@@ -314,64 +316,45 @@ class PeerJobs:
 
             with self.engine.begin() as conn:
                 for line in lines:
-                    # Only handle INSERT lines (our dump writes one INSERT per line)
+                    # Only handle INSERT lines
                     if not line.upper().startswith('INSERT'):
                         continue
 
-                    # Optionally check JobID presence and skip if exists
+                    # If merging, we need to handle potential primary key conflicts,
+                    # especially for jobs that were soft-deleted and are now being restored.
                     if merge:
-                        # attempt to parse JobID value quickly (works for our dumped format)
-                        import re
-                        m = re.search(r"VALUES\s*\((.*)\);?$", line, flags=re.IGNORECASE)
+                        # Attempt to parse JobID from the INSERT statement
+                        m = re.search(r"VALUES\s*\(\s*'([^']*)'", line, flags=re.IGNORECASE)
                         if m:
-                            vals_raw = m.group(1)
-                            # split on commas outside quotes (simple)
-                            vals = []
-                            cur = ''
-                            in_q = False
-                            for ch in vals_raw:
-                                if ch == "'" and not in_q:
-                                    in_q = True
-                                    cur += ch
-                                elif ch == "'" and in_q:
-                                    cur += ch
-                                    in_q = False
-                                elif ch == ',' and not in_q:
-                                    vals.append(cur.strip())
-                                    cur = ''
-                                else:
-                                    cur += ch
-                            if cur.strip() != '':
-                                vals.append(cur.strip())
-                            # JobID is first column in our dump
-                            if len(vals) > 0:
-                                jobid_val = vals[0].strip()
-                                if jobid_val.upper() == 'NULL':
-                                    jobid = None
-                                else:
-                                    if jobid_val.startswith("'") and jobid_val.endswith("'"):
-                                        jobid = jobid_val[1:-1].replace("''", "'")
-                                    else:
-                                        jobid = jobid_val
-                                if jobid:
-                                    exists = conn.execute(
-                                        self.peerJobTable.select().where(self.peerJobTable.c.JobID == jobid)
-                                    ).first()
-                                    if exists:
-                                        # skip this insert to avoid duplicate JobID
-                                        continue
-                    # execute the INSERT
+                            jobid = m.group(1)
+                            # Check if a record with this JobID already exists
+                            exists = conn.execute(
+                                self.peerJobTable.select().where(self.peerJobTable.c.JobID == jobid)
+                            ).first()
+
+                            if exists:
+                                # An entry for this JobID already exists (e.g., an expired job).
+                                # To ensure the state from the backup is restored, we delete the
+                                # old record first. The INSERT will then execute right after this block.
+                                conn.execute(
+                                    self.peerJobTable.delete().where(self.peerJobTable.c.JobID == jobid)
+                                )
+
+                    # Execute the INSERT statement from the backup file
                     try:
                         conn.execute(text(line))
                     except Exception as e:
-                        # return the error to caller so it can be logged
+                        current_app.logger.error(f"Failed to execute job SQL line: {e}")
                         return False, f"Error executing line: {line[:200]}... Error: {str(e)}"
             try:
+                # Reload jobs from the database into memory
                 self.__getJobs()
-            except Exception:
-                # don't break restore if reload somehow fails; return success but log if needed
+            except Exception as e:
+                current_app.logger.error(f"Failed to reload jobs after import: {e}")
+                # Don't fail the entire restore, but this is a problem.
                 pass
 
             return True, None
         except Exception as e:
+            current_app.logger.error(f"General failure in importJobsFromFile: {e}", exc_info=True)
             return False, str(e)
