@@ -914,9 +914,9 @@ class WireguardConfiguration:
                     with open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', jobs_sql_name), 'w+') as jf:
                         for l in job_lines:
                             jf.write(l + "\n")
-        except Exception:
-            # don't break backup if job dump fails; consider logging
-            pass
+        except Exception as e:
+            # don't break backup if job dump fails; log the error
+            current_app.logger.error(f"Failed to dump peer jobs for configuration {self.Name}: {e}", exc_info=True)
 
         return True, {
             "filename": conf_name,
