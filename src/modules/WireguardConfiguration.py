@@ -798,8 +798,8 @@ class WireguardConfiguration:
                                 )
                             )
 
-                            total_sent = 0
-                            total_receive = 0
+                            total_sent = cur_total_sent
+                            total_receive = cur_total_receive
                         status, p = self.searchPeer(data_usage[i][0])
                         if status:
                             if p.total_receive != total_receive or p.total_sent != total_sent:

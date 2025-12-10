@@ -113,7 +113,7 @@ def peerJobScheduleBackgroundThread():
         while True:
             try:
                 AllPeerJobs.runJob()
-                time.sleep(180)
+                time.sleep(30)
             except Exception as e:
                 app.logger.error(f"Background Thread #2 Error:" , e)
 
