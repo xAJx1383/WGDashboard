@@ -190,7 +190,9 @@ class PeerJobs:
                             s = job.Field.split("_")[1]
                             x = getattr(fp, f"total_{s}", 0) + getattr(fp, f"cumu_{s}", 0)
                             try:
-                                y = float(job.Value)
+                                # Sanitize input: remove common units and replace comma with dot
+                                val_str = str(job.Value).lower().replace("gb", "").replace("mb", "").replace("kb", "").strip().replace(",", ".")
+                                y = float(val_str)
                                 runAction = self.__runJob_Compare(x, y, job.Operator)
                                 current_app.logger.warning(f"Data comparison result: {x} {job.Operator} {y} = {runAction}")
                             except ValueError:

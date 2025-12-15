@@ -787,7 +787,16 @@ class WireguardConfiguration:
                         if total_sent <= cur_total_sent and total_receive <= cur_total_receive:
                             total_sent = cur_total_sent
                             total_receive = cur_total_receive
+                            total_sent = cur_total_sent
+                            total_receive = cur_total_receive
                         else:
+                            cumulative_receive = cur_i['cumu_receive'] + total_receive
+                            cumulative_sent = cur_i['cumu_sent'] + total_sent
+                            
+                            # Update totals to new baseline to prevent re-triggering logic
+                            total_sent = cur_total_sent
+                            total_receive = cur_total_receive
+
                             conn.execute(
                                 self.peersTable.update().values({
                                     "cumu_receive": cumulative_receive,
