@@ -1531,7 +1531,7 @@ def API_Email_PreviewBody():
 
 @app.get(f'{APP_PREFIX}/api/systemStatus')
 def API_SystemStatus():
-    return ResponseObject(data=SystemStatus)
+    return ResponseObject(data=SystemStatus.toJson())
 
 @app.get(f'{APP_PREFIX}/api/protocolsEnabled')
 def API_ProtocolsEnabled():

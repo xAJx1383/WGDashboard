@@ -60,15 +60,15 @@ class SystemStatus:
         if not self._cached_status:
             # Initial load fallback if cache isn't ready
             return {
-                "CPU": self.CPU,
+                "CPU": self.CPU.toJson(),
                 "Memory": {
-                    "VirtualMemory": self.MemoryVirtual,
-                    "SwapMemory": self.MemorySwap
+                    "VirtualMemory": self.MemoryVirtual.toJson(),
+                    "SwapMemory": self.MemorySwap.toJson()
                 },
-                "Disks": self.Disks,
-                "NetworkInterfaces": self.NetworkInterfaces,
+                "Disks": self.Disks.toJson(),
+                "NetworkInterfaces": self.NetworkInterfaces.toJson(),
                 "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
-                "Processes": self.Processes
+                "Processes": self.Processes.toJson()
             }
         return self._cached_status
         
@@ -82,13 +82,13 @@ class CPU:
         try:
             self.cpu_percent = psutil.cpu_percent(interval=1)
         except Exception as e:
-            current_app.logger.error("Get CPU Percent error", e)
+            current_app.logger.error(f"Get CPU Percent error: {e}", exc_info=True)
     
     def getPerCPUPercent(self):
         try:
             self.cpu_percent_per_cpu = psutil.cpu_percent(interval=1, percpu=True)
         except Exception as e:
-            current_app.logger.error("Get Per CPU Percent error", e)
+            current_app.logger.error(f"Get Per CPU Percent error: {e}", exc_info=True)
     
     def toJson(self):
         return self.__dict__
@@ -108,10 +108,10 @@ class Memory:
                 memory = psutil.swap_memory()
                 self.available = memory.free
             self.total = memory.total
-            
+
             self.percent = memory.percent
         except Exception as e:
-            current_app.logger.error("Get Memory percent error", e)
+            current_app.logger.error(f"Get Memory percent error: {e}", exc_info=True)
     def toJson(self):
         return self.__dict__
 
@@ -122,7 +122,7 @@ class Disks:
         try:
             self.disks = list(map(lambda x : Disk(x.mountpoint), psutil.disk_partitions()))
         except Exception as e:
-            current_app.logger.error("Get Disk percent error", e)
+            current_app.logger.error(f"Get Disk percent error: {e}", exc_info=True)
     def toJson(self):
         return self.disks
 
@@ -141,7 +141,7 @@ class Disk:
             self.used = disk.used
             self.percent = disk.percent
         except Exception as e:
-            current_app.logger.error("Get Disk percent error", e)
+            current_app.logger.error(f"Get Disk usage error: {e}", exc_info=True)
     def toJson(self):
         return self.__dict__
     
@@ -177,7 +177,7 @@ class NetworkInterfaces:
                     'recv': round((network[i].bytes_recv - self.interfaces[i]['bytes_recv']) / 1024 / 1024, 4)
                 }
         except Exception as e:
-            current_app.logger.error("Get network error", e)
+            current_app.logger.error(f"Get network error: {e}", exc_info=True)
 
     def toJson(self):
         return self.interfaces
@@ -218,7 +218,7 @@ class Processes:
                     memory_processes.append(mem_process)
 
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                    # Skip processes we can’t access or that no longer exist
+                    # Skip processes we can't access or that no longer exist
                     continue
 
             # Sort by CPU and memory usage (descending order)
@@ -230,7 +230,7 @@ class Processes:
             self.Memory_Top_Processes = mem_sorted[:20]
 
         except Exception as e:
-            current_app.logger.error("Get processes error", e)
+            current_app.logger.error(f"Get processes error: {e}", exc_info=True)
 
     def toJson(self):
         return {

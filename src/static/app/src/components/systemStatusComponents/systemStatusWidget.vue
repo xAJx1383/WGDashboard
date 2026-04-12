@@ -65,14 +65,14 @@ const data = computed(() => {
 					<LocaleText t="Storage"></LocaleText>
 				</h6>
 				<h6 class="ms-auto">
-					<span v-if="data">
+					<span v-if="data && data.Disks && data.Disks.length > 0">
 						{{ data.Disks.find(x => x.mountPoint === '/') ? data?.Disks.find(x => x.mountPoint === '/').percent : data?.Disks[0].percent }}%
 					</span>
 					<span v-else class="spinner-border spinner-border-sm"></span>
 				</h6>
 			</div>
 			<div class="progress" role="progressbar" style="height: 6px">
-				<div class="progress-bar bg-success" :style="{width: `${data?.Disks.find(x => x.mountPoint === '/') ? data?.Disks.find(x => x.mountPoint === '/').percent : data?.Disks[0].percent}%` }"></div>
+				<div class="progress-bar bg-success" :style="{width: `${data?.Disks && data.Disks.length > 0 ? (data.Disks.find(x => x.mountPoint === '/') ? data?.Disks.find(x => x.mountPoint === '/').percent : data?.Disks[0].percent) : 0}%` }"></div>
 			</div>
 			<div class="d-flex mt-2 gap-1">
 				<StorageMount v-for="(disk, count) in data?.Disks"
@@ -114,7 +114,7 @@ const data = computed(() => {
 				</h6>
 			</div>
 			<div class="progress" role="progressbar" style="height: 6px">
-				<div class="progress-bar bg-warning" :style="{width: `$ data?.Memory.SwapMemory.percent}%` }"></div>
+				<div class="progress-bar bg-warning" :style="{width: `${data?.Memory.SwapMemory.percent}%` }"></div>
 			</div>
 		</div>
 	</div>

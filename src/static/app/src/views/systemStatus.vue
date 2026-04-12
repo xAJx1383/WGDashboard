@@ -224,7 +224,7 @@ const memoryHistoricalChartData = computed(() => {
 							<Process
 								:key="p.pid"
 								:cpu="true"
-								:process="p" v-for="p in data?.Processes.cpu_top_10"></Process>
+								:process="p" v-for="p in data?.Processes.cpu_top"></Process>
 						</TransitionGroup>
 					</div>
 				</div>
@@ -282,7 +282,7 @@ const memoryHistoricalChartData = computed(() => {
 						<TransitionGroup name="process">
 							<Process
 								:key="p.pid"
-								:process="p" v-for="p in data?.Processes.memory_top_10">
+								:process="p" v-for="p in data?.Processes.memory_top">
 							</Process>
 						</TransitionGroup>
 					</div>
