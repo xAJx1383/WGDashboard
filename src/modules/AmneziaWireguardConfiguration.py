@@ -1,7 +1,7 @@
 """
 AmneziaWG Configuration
 """
-import random, sqlalchemy, os, subprocess, re, uuid
+import random, secrets, sqlalchemy, os, subprocess, re, uuid
 from flask import current_app
 from .PeerJobs import PeerJobs
 from .AmneziaWGPeer import AmneziaWGPeer
@@ -287,18 +287,19 @@ class AmneziaWireguardConfiguration(WireguardConfiguration):
                     )
             for p in peers:
                 presharedKeyExist = len(p['preshared_key']) > 0
-                rd = random.Random()
-                uid = str(uuid.UUID(int=rd.getrandbits(128), version=4))
+                temp_psk_path = None
                 if presharedKeyExist:
-                    with open(uid, "w+") as f:
+                    temp_psk_path = f".psk_{secrets.token_hex(16)}"
+                    with open(temp_psk_path, "w") as f:
                         f.write(p['preshared_key'])
 
-                cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
-                if presharedKeyExist:
-                    cmd.extend(["preshared-key", uid])
-                subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-                if presharedKeyExist:
-                    os.remove(uid)
+                try:
+                    cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
+                    cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
+                    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                finally:
+                    if temp_psk_path and os.path.exists(temp_psk_path):
+                        os.remove(temp_psk_path)
             subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT)
             self.getPeers()
             for p in peers:

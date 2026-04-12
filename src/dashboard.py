@@ -83,10 +83,12 @@ def peerInformationBackgroundThread():
     while True:
         with app.app_context():
             try:
-                curKeys = list(WireguardConfigurations.keys())
+                with _wireguard_config_lock:
+                    curKeys = list(WireguardConfigurations.keys())
+                    configs_snapshot = {k: v for k, v in WireguardConfigurations.items() if v is not None}
                 for name in curKeys:
-                    if name in WireguardConfigurations.keys() and WireguardConfigurations.get(name) is not None:
-                        c = WireguardConfigurations.get(name)
+                    if name in configs_snapshot:
+                        c = configs_snapshot.get(name)
                         if c.getStatus():
                             c.getPeersLatestHandshake()
                             c.getPeersTransfer()
@@ -141,13 +143,11 @@ def InitWireguardConfigurationsList(startup: bool = False):
             if RegexMatch("^(.{1,}).(conf)$", i):
                 i = i.replace('.conf', '')
                 try:
-                    if i in WireguardConfigurations.keys():
-                        if WireguardConfigurations[i].configurationFileChanged():
+                    with _wireguard_config_lock:
+                        needs_reload = i not in WireguardConfigurations or WireguardConfigurations[i].configurationFileChanged()
+                        if needs_reload:
                             with app.app_context():
-                                WireguardConfigurations[i] = WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, i)
-                    else:
-                        with app.app_context():
-                            WireguardConfigurations[i] = WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, i, startup=startup)
+                                WireguardConfigurations[i] = WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, i, startup=startup)
                 except WireguardConfiguration.InvalidConfigurationFileException as e:
                     app.logger.error(f"{i} have an invalid configuration file.")
 
@@ -158,13 +158,11 @@ def InitWireguardConfigurationsList(startup: bool = False):
             if RegexMatch("^(.{1,}).(conf)$", i):
                 i = i.replace('.conf', '')
                 try:
-                    if i in WireguardConfigurations.keys():
-                        if WireguardConfigurations[i].configurationFileChanged():
+                    with _wireguard_config_lock:
+                        needs_reload = i not in WireguardConfigurations or WireguardConfigurations[i].configurationFileChanged()
+                        if needs_reload:
                             with app.app_context():
-                                WireguardConfigurations[i] = AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, i)
-                    else:
-                        with app.app_context():
-                            WireguardConfigurations[i] = AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, i, startup=startup)
+                                WireguardConfigurations[i] = AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, i, startup=startup)
                 except WireguardConfiguration.InvalidConfigurationFileException as e:
                     app.logger.error(f"{i} have an invalid configuration file.")
 
@@ -186,6 +184,7 @@ dictConfig({
 
 
 WireguardConfigurations: dict[str, WireguardConfiguration] = {}
+_wireguard_config_lock = threading.RLock()
 CONFIGURATION_PATH = os.getenv('CONFIGURATION_PATH', '.')
 
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 5206928
@@ -374,6 +373,13 @@ def API_addWireguardConfiguration():
     if data.get("Protocol") not in ProtocolsEnabled():
         return ResponseObject(False, "Please provide a valid protocol: wg / awg.")
 
+    # Validate configuration name format
+    config_name = data.get('ConfigurationName', '')
+    if not re.match(r"^[a-zA-Z0-9_-]+$", config_name):
+        return ResponseObject(False, "Invalid configuration name. Only alphanumeric characters, underscores, and hyphens are allowed.")
+    if len(config_name) > 50:
+        return ResponseObject(False, "Configuration name must be 50 characters or fewer.")
+
     # Check duplicate names, ports, address
     for i in WireguardConfigurations.values():
         if i.Name == data['ConfigurationName']:
@@ -396,7 +402,7 @@ def API_addWireguardConfiguration():
             "wg": DashboardConfig.GetConfig("Server", "wg_conf_path")[1],
             "awg": DashboardConfig.GetConfig("Server", "awg_conf_path")[1]
         }
-     
+
         if (os.path.exists(os.path.join(path['wg'], 'WGDashboard_Backup', data["Backup"])) and
                 os.path.exists(os.path.join(path['wg'], 'WGDashboard_Backup', data["Backup"].replace('.conf', '.sql')))):
             protocol = "wg"
@@ -405,18 +411,22 @@ def API_addWireguardConfiguration():
             protocol = "awg"
         else:
             return ResponseObject(False, "Backup does not exist")
-        
+
         shutil.copy(
             os.path.join(path[protocol], 'WGDashboard_Backup', data["Backup"]),
             os.path.join(path[protocol], f'{data["ConfigurationName"]}.conf')
         )
-        WireguardConfigurations[data['ConfigurationName']] = (
+        new_config = (
             WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, data=data, name=data['ConfigurationName'])) if protocol == 'wg' else (
             AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, data=data, name=data['ConfigurationName']))
+        with _wireguard_config_lock:
+            WireguardConfigurations[data['ConfigurationName']] = new_config
     else:
-        WireguardConfigurations[data['ConfigurationName']] = (
+        new_config = (
             WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, data=data)) if data.get('Protocol') == 'wg' else (
             AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, data=data))
+        with _wireguard_config_lock:
+            WireguardConfigurations[data['ConfigurationName']] = new_config
     return ResponseObject()
 
 @app.get(f'{APP_PREFIX}/api/toggleWireguardConfiguration')
@@ -488,13 +498,18 @@ def API_UpdateWireguardConfigurationRawFile():
 @app.post(f'{APP_PREFIX}/api/deleteWireguardConfiguration')
 def API_deleteWireguardConfiguration():
     data = request.get_json()
-    if "ConfigurationName" not in data.keys() or data.get("ConfigurationName") is None or data.get("ConfigurationName") not in WireguardConfigurations.keys():
+    config_name = data.get("ConfigurationName")
+    if config_name is None or config_name not in WireguardConfigurations:
         return ResponseObject(False, "Please provide the configuration name you want to delete", status_code=404)
-    rp =  WireguardConfigurations.pop(data.get("ConfigurationName"))
-    
+    with _wireguard_config_lock:
+        rp = WireguardConfigurations.pop(config_name, None)
+        if rp is None:
+            return ResponseObject(False, "Configuration does not exist", status_code=404)
+
     status = rp.deleteConfiguration()
-    if not status:
-        WireguardConfigurations[data.get("ConfigurationName")] = rp
+    with _wireguard_config_lock:
+        if not status:
+            WireguardConfigurations[config_name] = rp
     return ResponseObject(status)
 
 @app.post(f'{APP_PREFIX}/api/renameWireguardConfiguration')
@@ -502,20 +517,26 @@ def API_renameWireguardConfiguration():
     data = request.get_json()
     keys = ["ConfigurationName", "NewConfigurationName"]
     for k in keys:
-        if (k not in data.keys() or data.get(k) is None or len(data.get(k)) == 0 or 
-                (k == "ConfigurationName" and data.get(k) not in WireguardConfigurations.keys())): 
+        if (k not in data.keys() or data.get(k) is None or len(data.get(k)) == 0 or
+                (k == "ConfigurationName" and data.get(k) not in WireguardConfigurations.keys())):
             return ResponseObject(False, "Please provide the configuration name you want to rename", status_code=404)
-    
-    if data.get("NewConfigurationName") in WireguardConfigurations.keys():
-        return ResponseObject(False, "Configuration name already exist", status_code=400)
-    
-    rc = WireguardConfigurations.pop(data.get("ConfigurationName"))
-    
-    status, message = rc.renameConfiguration(data.get("NewConfigurationName"))
-    if status:
-        WireguardConfigurations[data.get("NewConfigurationName")] = (WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, data.get("NewConfigurationName")) if rc.Protocol == 'wg' else AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, data.get("NewConfigurationName")))
-    else:
-        WireguardConfigurations[data.get("ConfigurationName")] = rc
+
+    old_name = data.get("ConfigurationName")
+    new_name = data.get("NewConfigurationName")
+
+    with _wireguard_config_lock:
+        if new_name in WireguardConfigurations:
+            return ResponseObject(False, "Configuration name already exist", status_code=400)
+        rc = WireguardConfigurations.pop(old_name, None)
+        if rc is None:
+            return ResponseObject(False, "Configuration does not exist", status_code=404)
+
+    status, message = rc.renameConfiguration(new_name)
+    with _wireguard_config_lock:
+        if status:
+            WireguardConfigurations[new_name] = (WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, new_name) if rc.Protocol == 'wg' else AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, new_name))
+        else:
+            WireguardConfigurations[old_name] = rc
     return ResponseObject(status, message)
 
 @app.get(f'{APP_PREFIX}/api/getWireguardConfigurationRealtimeTraffic')
@@ -1214,8 +1235,15 @@ def API_download():
     file = request.args.get('file')
     if file is None or len(file) == 0:
         return ResponseObject(False, "Please specify a file")
-    if os.path.exists(os.path.join('download', file)):
-        return send_file(os.path.join('download', file), as_attachment=True)
+    # Prevent path traversal attacks
+    if '..' in file or '/' in file or '\\' in file:
+        return ResponseObject(False, "Invalid file name")
+    safe_path = os.path.realpath(os.path.join('download', file))
+    download_dir = os.path.realpath('download')
+    if not safe_path.startswith(download_dir + os.sep) and safe_path != download_dir:
+        return ResponseObject(False, "Invalid file path")
+    if os.path.exists(safe_path):
+        return send_file(safe_path, as_attachment=True)
     else:
         return ResponseObject(False, "File does not exist")
 

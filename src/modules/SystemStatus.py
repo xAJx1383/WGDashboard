@@ -113,7 +113,6 @@ class Memory:
         except Exception as e:
             current_app.logger.error("Get Memory percent error", e)
     def toJson(self):
-        self.getData()
         return self.__dict__
 
 class Disks:
@@ -125,7 +124,6 @@ class Disks:
         except Exception as e:
             current_app.logger.error("Get Disk percent error", e)
     def toJson(self):
-        self.getData()
         return self.disks
 
 class Disk:
@@ -145,7 +143,6 @@ class Disk:
         except Exception as e:
             current_app.logger.error("Get Disk percent error", e)
     def toJson(self):
-        self.getData()
         return self.__dict__
     
 class NetworkInterfaces:
@@ -196,8 +193,8 @@ class Process:
 
 class Processes:
     def __init__(self):
-        self.CPU_Top_10_Processes: list[Process] = []
-        self.Memory_Top_10_Processes: list[Process] = []
+        self.CPU_Top_Processes: list[Process] = []
+        self.Memory_Top_Processes: list[Process] = []
     def getData(self):
         try:
             processes = list(psutil.process_iter())
@@ -229,15 +226,14 @@ class Processes:
             mem_sorted = sorted(memory_processes, key=lambda p: p.percent, reverse=True)
 
             # Get top 20 processes for each
-            self.CPU_Top_10_Processes = cpu_sorted[:20]
-            self.Memory_Top_10_Processes = mem_sorted[:20]
+            self.CPU_Top_Processes = cpu_sorted[:20]
+            self.Memory_Top_Processes = mem_sorted[:20]
 
         except Exception as e:
             current_app.logger.error("Get processes error", e)
 
     def toJson(self):
-        self.getData()
         return {
-            "cpu_top_10": self.CPU_Top_10_Processes,
-            "memory_top_10": self.Memory_Top_10_Processes
+            "cpu_top": self.CPU_Top_Processes,
+            "memory_top": self.Memory_Top_Processes
         }

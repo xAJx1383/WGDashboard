@@ -104,7 +104,6 @@ class WireguardConfiguration:
 
             if self.Protocol == 'awg':
                 self.__parser["Interface"]["Jc"] = self.Jc
-                self.__parser["Interface"]["Jc"] = self.Jc
                 self.__parser["Interface"]["Jmin"] = self.Jmin
                 self.__parser["Interface"]["Jmax"] = self.Jmax
                 self.__parser["Interface"]["S1"] = self.S1
@@ -350,11 +349,26 @@ class WireguardConfiguration:
         self.createDatabase()
         if not os.path.exists(sqlFilePath):
             return False
+
+        # Validate that the resolved SQL file path is within the expected backup directory
+        resolved_sql_path = os.path.realpath(sqlFilePath)
+        backup_dir = os.path.realpath(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup'))
+        if not resolved_sql_path.startswith(backup_dir + os.sep):
+            current_app.logger.error(f"SQL file path is outside backup directory: {sqlFilePath}")
+            return False
+
+        # Only allow safe SQL statement types from backup files
+        allowed_prefixes = ('INSERT', 'CREATE', 'ALTER', 'DROP', 'UPDATE', 'DELETE', 'BEGIN', 'COMMIT', 'ROLLBACK', 'PRAGMA')
         with self.engine.begin() as conn:
             with open(sqlFilePath, 'r') as f:
                 for l in f.readlines():
                     l = l.rstrip("\n")
                     if len(l) > 0:
+                        # Validate SQL statement type before execution
+                        stripped = l.strip().upper()
+                        if not any(stripped.startswith(prefix) for prefix in allowed_prefixes):
+                            current_app.logger.warning(f"Skipping unrecognized SQL statement in backup: {l[:80]}...")
+                            continue
                         conn.execute(sqlalchemy.text(l))
         return True
 
@@ -554,18 +568,19 @@ class WireguardConfiguration:
                     )
             for p in peers:
                 presharedKeyExist = len(p['preshared_key']) > 0
-                rd = random.Random()
-                uid = str(uuid.UUID(int=rd.getrandbits(128), version=4))
+                temp_psk_path = None
                 if presharedKeyExist:
-                    with open(uid, "w+") as f:
+                    temp_psk_path = f".psk_{secrets.token_hex(16)}"
+                    with open(temp_psk_path, "w") as f:
                         f.write(p['preshared_key'])
 
-                cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
-                if presharedKeyExist:
-                    cmd.extend(["preshared-key", uid])
-                subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-                if presharedKeyExist:
-                    os.remove(uid)
+                try:
+                    cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
+                    cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
+                    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                finally:
+                    if temp_psk_path and os.path.exists(temp_psk_path):
+                        os.remove(temp_psk_path)
             subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT)
             self.getPeers()
             for p in peers:
@@ -610,17 +625,19 @@ class WireguardConfiguration:
                     )
 
                     presharedKeyExist = len(restrictedPeer['preshared_key']) > 0
-                    rd = random.Random()
-                    uid = str(uuid.UUID(int=rd.getrandbits(128), version=4))
+                    temp_psk_path = None
                     if presharedKeyExist:
-                        with open(uid, "w+") as f:
+                        temp_psk_path = f".psk_{secrets.token_hex(16)}"
+                        with open(temp_psk_path, "w") as f:
                             f.write(restrictedPeer['preshared_key'])
 
-                    cmd = [self.Protocol, "set", self.Name, "peer", restrictedPeer['id'], "allowed-ips", restrictedPeer['allowed_ip'].replace(' ', '')]
-                    if presharedKeyExist:
-                        cmd.extend(["preshared-key", uid])
-                    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-                    if presharedKeyExist: os.remove(uid)
+                    try:
+                        cmd = [self.Protocol, "set", self.Name, "peer", restrictedPeer['id'], "allowed-ips", restrictedPeer['allowed_ip'].replace(' ', '')]
+                        cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
+                        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                    finally:
+                        if temp_psk_path and os.path.exists(temp_psk_path):
+                            os.remove(temp_psk_path)
                 else:
                     return False, "Failed to allow access of peer " + i
         if not self.__wgSave():

@@ -1,6 +1,7 @@
 import os
 import random
 import re
+import secrets
 import subprocess
 import uuid
 
@@ -49,23 +50,19 @@ class AmneziaWGPeer(Peer):
             pubKey = GenerateWireguardPublicKey(private_key)
             if not pubKey[0] or pubKey[1] != self.id:
                 return False, "Private key does not match with the public key"
-        try:
-            rd = random.Random()
-            uid = str(uuid.UUID(int=rd.getrandbits(128), version=4))
-            pskExist = len(preshared_key) > 0
 
-            if pskExist:
-                with open(uid, "w+") as f:
-                    f.write(preshared_key)
+        temp_psk_path = None
+        pskExist = len(preshared_key) > 0
+        if pskExist:
+            temp_psk_path = f".psk_{secrets.token_hex(16)}"
+            with open(temp_psk_path, "w") as f:
+                f.write(preshared_key)
+
+        try:
             newAllowedIPs = allowed_ip.replace(" ", "")
             cmd = [self.configuration.Protocol, "set", self.configuration.Name, "peer", self.id, "allowed-ips", newAllowedIPs]
-            if pskExist:
-                cmd.extend(["preshared-key", uid])
-            else:
-                cmd.extend(["preshared-key", "/dev/null"])
+            cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
             updateAllowedIp = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-
-            if pskExist: os.remove(uid)
 
             if len(updateAllowedIp.decode().strip("\n")) != 0:
                 return False, "Update peer failed when updating Allowed IPs"
@@ -93,3 +90,6 @@ class AmneziaWGPeer(Peer):
             return True, None
         except subprocess.CalledProcessError as exc:
             return False, exc.output.decode("UTF-8").strip()
+        finally:
+            if temp_psk_path and os.path.exists(temp_psk_path):
+                os.remove(temp_psk_path)
