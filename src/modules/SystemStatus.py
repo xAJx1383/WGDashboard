@@ -10,6 +10,42 @@ class SystemStatus:
         self.NetworkInterfaces = NetworkInterfaces()
         self.Processes = Processes()
         self._cached_status = {}
+        
+        # Prime process CPU percentages (first call to cpu_percent() always returns 0)
+        try:
+            psutil.cpu_percent(interval=0.1)
+        except Exception:
+            pass
+        
+        # Perform initial data collection synchronously before starting thread
+        try:
+            self.MemoryVirtual.getData()
+            self.MemorySwap.getData()
+            self.Disks.getData()
+            self.Processes.getData()
+            # Get initial CPU data (non-blocking)
+            self.CPU.getCPUPercent()
+            self.CPU.getPerCPUPercent()
+            # Get initial network data (has 1s sleep, but we need it for cache)
+            self.NetworkInterfaces.getData()
+            
+            # Build initial cache
+            self._cached_status = {
+                "CPU": self.CPU.toJson(),
+                "Memory": {
+                    "VirtualMemory": self.MemoryVirtual.toJson(),
+                    "SwapMemory": self.MemorySwap.toJson()
+                },
+                "Disks": self.Disks.toJson(),
+                "NetworkInterfaces": self.NetworkInterfaces.toJson(),
+                "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
+                "Processes": self.Processes.toJson()
+            }
+        except Exception as e:
+            if hasattr(current_app, 'logger'):
+                current_app.logger.error(f"SystemStatus initial data collection error: {e}", exc_info=True)
+        
+        # Start background monitoring thread
         self._stop_event = threading.Event()
         self._monitoring_thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._monitoring_thread.start()
@@ -26,18 +62,46 @@ class SystemStatus:
                 ]
                 for t in threads:
                     t.start()
-                
+
                 # Other non-blocking updates
                 self.MemoryVirtual.getData()
                 self.MemorySwap.getData()
                 self.Disks.getData()
                 self.Processes.getData()
 
+                # Wait for threaded tasks with increased timeout (NetworkInterfaces has 1s sleep)
                 for t in threads:
-                    t.join(timeout=2) # Prevent hanging forever
+                    t.join(timeout=3)
 
-                # Update cache
-                self._cached_status = {
+                # Update cache with defensive error handling
+                try:
+                    self._cached_status = {
+                        "CPU": self.CPU.toJson(),
+                        "Memory": {
+                            "VirtualMemory": self.MemoryVirtual.toJson(),
+                            "SwapMemory": self.MemorySwap.toJson()
+                        },
+                        "Disks": self.Disks.toJson(),
+                        "NetworkInterfaces": self.NetworkInterfaces.toJson(),
+                        "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
+                        "Processes": self.Processes.toJson()
+                    }
+                except Exception as cache_error:
+                    if hasattr(current_app, 'logger'):
+                        current_app.logger.error(f"SystemStatus cache update error: {cache_error}", exc_info=True)
+            except Exception as e:
+                # Log error but keep thread alive
+                if hasattr(current_app, 'logger'):
+                    current_app.logger.error(f"SystemStatus monitoring loop error: {e}", exc_info=True)
+
+            self._stop_event.wait(5)
+
+    def toJson(self):
+        """Returns cached status instantly."""
+        if not self._cached_status:
+            # Initial load fallback if cache isn't ready - with defensive error handling
+            try:
+                return {
                     "CPU": self.CPU.toJson(),
                     "Memory": {
                         "VirtualMemory": self.MemoryVirtual.toJson(),
@@ -49,27 +113,20 @@ class SystemStatus:
                     "Processes": self.Processes.toJson()
                 }
             except Exception as e:
-                # Log error but keep thread alive
                 if hasattr(current_app, 'logger'):
-                    current_app.logger.error(f"SystemStatus monitoring loop error: {e}")
-            
-            self._stop_event.wait(5)
-
-    def toJson(self):
-        """Returns cached status instantly."""
-        if not self._cached_status:
-            # Initial load fallback if cache isn't ready
-            return {
-                "CPU": self.CPU.toJson(),
-                "Memory": {
-                    "VirtualMemory": self.MemoryVirtual.toJson(),
-                    "SwapMemory": self.MemorySwap.toJson()
-                },
-                "Disks": self.Disks.toJson(),
-                "NetworkInterfaces": self.NetworkInterfaces.toJson(),
-                "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
-                "Processes": self.Processes.toJson()
-            }
+                    current_app.logger.error(f"SystemStatus toJson fallback error: {e}", exc_info=True)
+                # Return minimal safe structure
+                return {
+                    "CPU": {"cpu_percent": 0, "cpu_percent_per_cpu": []},
+                    "Memory": {
+                        "VirtualMemory": {"total": 0, "available": 0, "percent": 0},
+                        "SwapMemory": {"total": 0, "available": 0, "percent": 0}
+                    },
+                    "Disks": [],
+                    "NetworkInterfaces": {},
+                    "NetworkInterfacesPriority": {},
+                    "Processes": {"cpu_top": [], "memory_top": []}
+                }
         return self._cached_status
         
 
@@ -121,6 +178,11 @@ class Disks:
     def getData(self):
         try:
             self.disks = list(map(lambda x : Disk(x.mountpoint), psutil.disk_partitions()))
+            # Populate data for each disk
+            for disk in self.disks:
+                disk.getData()
+            # Filter out disks that couldn't be accessed (percent = 0 and total = 0)
+            self.disks = [disk for disk in self.disks if disk.total > 0]
         except Exception as e:
             current_app.logger.error(f"Get Disk percent error: {e}", exc_info=True)
     def toJson(self):
@@ -140,8 +202,15 @@ class Disk:
             self.free = disk.free
             self.used = disk.used
             self.percent = disk.percent
+        except (PermissionError, OSError) as e:
+            # Skip inaccessible mount points (common on Linux for certain partitions)
+            if hasattr(current_app, 'logger'):
+                current_app.logger.debug(f"Cannot access {self.mountPoint}: {e}")
+            self.percent = 0
         except Exception as e:
-            current_app.logger.error(f"Get Disk usage error: {e}", exc_info=True)
+            if hasattr(current_app, 'logger'):
+                current_app.logger.error(f"Get Disk usage error for {self.mountPoint}: {e}", exc_info=True)
+            self.percent = 0
     def toJson(self):
         return self.__dict__
     
