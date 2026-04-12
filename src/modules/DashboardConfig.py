@@ -47,7 +47,8 @@ class DashboardConfig:
                 "dashboard_sort": "status",
                 "dashboard_theme": "dark",
                 "dashboard_api_key": "false",
-                "dashboard_language": "en-US"
+                "dashboard_language": "en-US",
+                "secret_key": secrets.token_urlsafe(32)
             },
             "Peers": {
                 "peer_global_DNS": "1.1.1.1",
@@ -99,7 +100,6 @@ class DashboardConfig:
         self.dbMetadata = db.MetaData()
         self.__createAPIKeyTable()
         self.DashboardAPIKeys = self.__getAPIKeys()
-        self.APIAccessed = False
         self.SetConfig("Server", "version", DashboardConfig.DashboardVersion)
 
     def getConnectionString(self, database) -> str or None:

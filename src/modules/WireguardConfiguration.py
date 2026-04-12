@@ -560,12 +560,13 @@ class WireguardConfiguration:
                     with open(uid, "w+") as f:
                         f.write(p['preshared_key'])
 
-                subprocess.check_output(f"{self.Protocol} set {self.Name} peer {p['id']} allowed-ips {p['allowed_ip'].replace(' ', '')}{f' preshared-key {uid}' if presharedKeyExist else ''}",
-                                        shell=True, stderr=subprocess.STDOUT)
+                cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
+                if presharedKeyExist:
+                    cmd.extend(["preshared-key", uid])
+                subprocess.check_output(cmd, stderr=subprocess.STDOUT)
                 if presharedKeyExist:
                     os.remove(uid)
-            subprocess.check_output(
-                f"{self.Protocol}-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)
+            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT)
             self.getPeers()
             for p in peers:
                 p = self.searchPeer(p['id'])
@@ -615,8 +616,10 @@ class WireguardConfiguration:
                         with open(uid, "w+") as f:
                             f.write(restrictedPeer['preshared_key'])
 
-                    subprocess.check_output(f"{self.Protocol} set {self.Name} peer {restrictedPeer['id']} allowed-ips {restrictedPeer['allowed_ip'].replace(' ', '')}{f' preshared-key {uid}' if presharedKeyExist else ''}",
-                                            shell=True, stderr=subprocess.STDOUT)
+                    cmd = [self.Protocol, "set", self.Name, "peer", restrictedPeer['id'], "allowed-ips", restrictedPeer['allowed_ip'].replace(' ', '')]
+                    if presharedKeyExist:
+                        cmd.extend(["preshared-key", uid])
+                    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
                     if presharedKeyExist: os.remove(uid)
                 else:
                     return False, "Failed to allow access of peer " + i
@@ -636,8 +639,8 @@ class WireguardConfiguration:
                 found, pf = self.searchPeer(p)
                 if found:
                     try:
-                        subprocess.check_output(f"{self.Protocol} set {self.Name} peer {pf.id} remove",
-                                                shell=True, stderr=subprocess.STDOUT)
+                        subprocess.check_output([self.Protocol, "set", self.Name, "peer", pf.id, "remove"],
+                                                stderr=subprocess.STDOUT)
                         conn.execute(
                             self.peersRestrictedTable.insert().from_select(
                                 [c.name for c in self.peersTable.columns],
@@ -688,8 +691,8 @@ class WireguardConfiguration:
                     AllPeerShareLinks.updateLinkExpireDate(shareLink.ShareID, datetime.now())
                 if found:
                     try:
-                        subprocess.check_output(f"{self.Protocol} set {self.Name} peer {pf.id} remove",
-                                                shell=True, stderr=subprocess.STDOUT)
+                        subprocess.check_output([self.Protocol, "set", self.Name, "peer", pf.id, "remove"],
+                                                stderr=subprocess.STDOUT)
                         conn.execute(
                             self.peersTable.delete().where(
                                 self.peersTable.columns.id == pf.id
@@ -719,7 +722,7 @@ class WireguardConfiguration:
 
     def __wgSave(self) -> tuple[bool, str] | tuple[bool, None]:
         try:
-            subprocess.check_output(f"{self.Protocol}-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)
+            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT)
             return True, None
         except subprocess.CalledProcessError as e:
             return False, str(e)
@@ -728,8 +731,8 @@ class WireguardConfiguration:
         if not self.getStatus():
             self.toggleConfiguration()
         try:
-            latestHandshake = subprocess.check_output(f"{self.Protocol} show {self.Name} latest-handshakes",
-                                                      shell=True, stderr=subprocess.STDOUT)
+            latestHandshake = subprocess.check_output([self.Protocol, "show", self.Name, "latest-handshakes"],
+                                                      stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             return "stopped"
         latestHandshake = latestHandshake.decode("UTF-8").split()
@@ -768,8 +771,8 @@ class WireguardConfiguration:
         if not self.getStatus():
             self.toggleConfiguration()
         # try:
-        data_usage = subprocess.check_output(f"{self.Protocol} show {self.Name} transfer",
-                                             shell=True, stderr=subprocess.STDOUT)
+        data_usage = subprocess.check_output([self.Protocol, "show", self.Name, "transfer"],
+                                             stderr=subprocess.STDOUT)
         data_usage = data_usage.decode("UTF-8").split("\n")
         
         data_usage = [p.split("\t") for p in data_usage]
@@ -826,8 +829,8 @@ class WireguardConfiguration:
         if not self.getStatus():
             self.toggleConfiguration()
         try:
-            data_usage = subprocess.check_output(f"{self.Protocol} show {self.Name} endpoints",
-                                                 shell=True, stderr=subprocess.STDOUT)
+            data_usage = subprocess.check_output([self.Protocol, "show", self.Name, "endpoints"],
+                                                 stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             return "stopped"
         data_usage = data_usage.decode("UTF-8").split()
@@ -847,14 +850,14 @@ class WireguardConfiguration:
         self.getStatus()
         if self.Status:
             try:
-                check = subprocess.check_output(f"{self.Protocol}-quick down {self.Name}",
-                                                shell=True, stderr=subprocess.STDOUT)
+                check = subprocess.check_output([f"{self.Protocol}-quick", "down", self.Name],
+                                                stderr=subprocess.STDOUT)
                 self.removeAutostart()
             except subprocess.CalledProcessError as exc:
                 return False, str(exc.output.strip().decode("utf-8"))
         else:
             try:
-                check = subprocess.check_output(f"{self.Protocol}-quick up {self.Name}", shell=True, stderr=subprocess.STDOUT)
+                check = subprocess.check_output([f"{self.Protocol}-quick", "up", self.Name], stderr=subprocess.STDOUT)
                 self.addAutostart()
             except subprocess.CalledProcessError as exc:
                 return False, str(exc.output.strip().decode("utf-8"))
@@ -1033,6 +1036,8 @@ class WireguardConfiguration:
         return True
 
     def renameConfiguration(self, newConfigurationName) -> tuple[bool, str]:
+        if not re.match(r"^[a-zA-Z0-9_-]+$", newConfigurationName):
+            return False, "Invalid configuration name. Only alphanumeric characters, underscores, and hyphens are allowed."
         try:
             if self.getStatus():
                 self.toggleConfiguration()

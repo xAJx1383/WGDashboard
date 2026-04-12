@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import sqlalchemy
 from jinja2 import Template
-from flask import Flask, request, render_template, session, send_file
+from flask import Flask, request, render_template, session, send_file, g
 from flask_cors import CORS
 from icmplib import ping, traceroute
 from flask.json.provider import DefaultJSONProvider
@@ -189,11 +189,12 @@ WireguardConfigurations: dict[str, WireguardConfiguration] = {}
 CONFIGURATION_PATH = os.getenv('CONFIGURATION_PATH', '.')
 
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 5206928
-app.secret_key = secrets.token_urlsafe(32)
+with app.app_context():
+    DashboardConfig = DashboardConfig()
+app.secret_key = DashboardConfig.GetConfig("Server", "secret_key")[1]
 app.json = CustomJsonEncoder(app)
 with app.app_context():
     SystemStatus = SystemStatus()
-    DashboardConfig = DashboardConfig()
     EmailSender = EmailSender(DashboardConfig)
     AllPeerShareLinks: PeerShareLinks = PeerShareLinks(DashboardConfig, WireguardConfigurations)
     AllPeerJobs: PeerJobs = PeerJobs(DashboardConfig, WireguardConfigurations, AllPeerShareLinks)
@@ -224,48 +225,46 @@ def auth_req():
     if request.method.lower() == 'options':
         return ResponseObject(True)        
 
-    DashboardConfig.APIAccessed = False    
+    g.api_accessed = False    
     authenticationRequired = DashboardConfig.GetConfig("Server", "auth_req")[1]
-    d = request.headers
     if authenticationRequired:
-        apiKey = d.get('wg-dashboard-apikey')
+        headers = request.headers
+        apiKey = headers.get('wg-dashboard-apikey')
         apiKeyEnabled = DashboardConfig.GetConfig("Server", "dashboard_api_key")[1]
-        if apiKey is not None and len(apiKey) > 0 and apiKeyEnabled:
-            apiKeyExist = len(list(filter(lambda x : x.Key == apiKey, DashboardConfig.DashboardAPIKeys))) == 1
+        
+        if apiKey and apiKeyEnabled:
+            apiKeyExist = any(x.Key == apiKey for x in DashboardConfig.DashboardAPIKeys)
             DashboardLogger.log(str(request.url), str(request.remote_addr), Message=f"API Key Access: {('true' if apiKeyExist else 'false')} - Key: {apiKey}")
             if not apiKeyExist:
-                DashboardConfig.APIAccessed = False
-                response = Flask.make_response(app, {
-                    "status": False,
-                    "message": "API Key does not exist",
-                    "data": None
-                })
-                response.content_type = "application/json"
-                response.status_code = 401
+                response = ResponseObject(False, "API Key does not exist", status_code=401)
                 return response
-            DashboardConfig.APIAccessed = True
+            g.api_accessed = True
         else:
-            DashboardConfig.APIAccessed = False
-            whiteList = [
-                '/static/', 'validateAuthentication', 'authenticate', 'getDashboardConfiguration',
-                'getDashboardTheme', 'getDashboardVersion', 'sharePeer/get', 'isTotpEnabled', 'locale',
-                '/fileDownload',
-                '/client'
-            ]
+            # Secure whitelist check
+            path = request.path
+            # Normalize path for check by removing prefix
+            check_path = path[len(APP_PREFIX):] if path.startswith(APP_PREFIX) else path
             
-            if (("username" not in session or session.get("role") != "admin") 
-                    and (f"{(APP_PREFIX if len(APP_PREFIX) > 0 else '')}/" != request.path 
-                    and f"{(APP_PREFIX if len(APP_PREFIX) > 0 else '')}" != request.path)
-                    and len(list(filter(lambda x : x not in request.path, whiteList))) == len(whiteList)
-            ):
-                response = Flask.make_response(app, {
-                    "status": False,
-                    "message": "Unauthorized access.",
-                    "data": None
-                })
-                response.content_type = "application/json"
-                response.status_code = 401
-                return response
+            is_whitelisted = False
+            # Starts-with whitelist (prefixes)
+            prefix_whitelist = ['/static/', '/client/']
+            if any(check_path.startswith(p) for p in prefix_whitelist):
+                is_whitelisted = True
+            
+            # Exact match whitelist (API endpoints)
+            exact_whitelist = [
+                '/api/validateAuthentication', '/api/authenticate', '/api/getDashboardConfiguration',
+                '/api/getDashboardTheme', '/api/getDashboardVersion', '/api/isTotpEnabled', '/api/locale'
+            ]
+            if check_path in exact_whitelist or check_path == '/' or check_path == '/api/sharePeer/get':
+                is_whitelisted = True
+            
+            # Special case for file download with token
+            if check_path.startswith('/api/fileDownload'):
+                is_whitelisted = True
+
+            if not is_whitelisted and ("username" not in session or session.get("role") != "admin"):
+                return ResponseObject(False, "Unauthorized access.", status_code=401)
 
 @app.route(f'{APP_PREFIX}/api/handshake', methods=["GET", "OPTIONS"])
 def API_Handshake():
@@ -289,7 +288,7 @@ def API_AuthenticateLogin():
     if not DashboardConfig.GetConfig("Server", "auth_req")[1]:
         return ResponseObject(True, DashboardConfig.GetConfig("Other", "welcome_session")[1])
     
-    if DashboardConfig.APIAccessed:
+    if g.api_accessed:
         authToken = hashlib.sha256(f"{request.headers.get('wg-dashboard-apikey')}{datetime.now()}".encode()).hexdigest()
         session['role'] = 'admin'
         session['username'] = authToken

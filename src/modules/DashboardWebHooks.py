@@ -1,5 +1,6 @@
 import json
 import threading
+from concurrent.futures import ThreadPoolExecutor
 import time
 import urllib.parse
 import uuid
@@ -77,6 +78,7 @@ class DashboardWebHooks:
         
         self.metadata.create_all(self.engine)
         self.WebHooks: list[WebHook] = []
+        self._executor = ThreadPoolExecutor(max_workers=5)
         
         with self.engine.begin() as conn:
            conn.execute(
@@ -191,9 +193,8 @@ class DashboardWebHooks:
             for i in subscribedWebHooks:
                 try:
                     ws = WebHookSession(i, data)
-                    t = threading.Thread(target=ws.Execute, daemon=True)
-                    t.start()
-                    current_app.logger.info(f"Requesting {i.PayloadURL}")
+                    self._executor.submit(ws.Execute)
+                    current_app.logger.info(f"Queued WebHook for {i.PayloadURL}")
                 except Exception as e:
                     current_app.logger.error(f"Requesting {i.PayloadURL} error", e)
         except Exception as e:

@@ -9,29 +9,68 @@ class SystemStatus:
         self.Disks = Disks()
         self.NetworkInterfaces = NetworkInterfaces()
         self.Processes = Processes()
+        self._cached_status = {}
+        self._stop_event = threading.Event()
+        self._monitoring_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self._monitoring_thread.start()
+
+    def _monitor_loop(self):
+        """Background thread to update metrics every 5 seconds."""
+        while not self._stop_event.is_set():
+            try:
+                # Spawn threads for intense tasks to keep monitoring loop responsive
+                threads = [
+                    threading.Thread(target=self.CPU.getCPUPercent),
+                    threading.Thread(target=self.CPU.getPerCPUPercent),
+                    threading.Thread(target=self.NetworkInterfaces.getData)
+                ]
+                for t in threads:
+                    t.start()
+                
+                # Other non-blocking updates
+                self.MemoryVirtual.getData()
+                self.MemorySwap.getData()
+                self.Disks.getData()
+                self.Processes.getData()
+
+                for t in threads:
+                    t.join(timeout=2) # Prevent hanging forever
+
+                # Update cache
+                self._cached_status = {
+                    "CPU": self.CPU.toJson(),
+                    "Memory": {
+                        "VirtualMemory": self.MemoryVirtual.toJson(),
+                        "SwapMemory": self.MemorySwap.toJson()
+                    },
+                    "Disks": self.Disks.toJson(),
+                    "NetworkInterfaces": self.NetworkInterfaces.toJson(),
+                    "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
+                    "Processes": self.Processes.toJson()
+                }
+            except Exception as e:
+                # Log error but keep thread alive
+                if hasattr(current_app, 'logger'):
+                    current_app.logger.error(f"SystemStatus monitoring loop error: {e}")
+            
+            self._stop_event.wait(5)
+
     def toJson(self):
-        process = [
-            threading.Thread(target=self.CPU.getCPUPercent), 
-            threading.Thread(target=self.CPU.getPerCPUPercent),
-            threading.Thread(target=self.NetworkInterfaces.getData)
-        ]
-        for p in process:
-            p.start()
-        for p in process:
-            p.join()
-        
-        
-        return {
-            "CPU": self.CPU,
-            "Memory": {
-                "VirtualMemory": self.MemoryVirtual,
-                "SwapMemory": self.MemorySwap
-            },
-            "Disks": self.Disks,
-            "NetworkInterfaces": self.NetworkInterfaces,
-            "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
-            "Processes": self.Processes
-        }
+        """Returns cached status instantly."""
+        if not self._cached_status:
+            # Initial load fallback if cache isn't ready
+            return {
+                "CPU": self.CPU,
+                "Memory": {
+                    "VirtualMemory": self.MemoryVirtual,
+                    "SwapMemory": self.MemorySwap
+                },
+                "Disks": self.Disks,
+                "NetworkInterfaces": self.NetworkInterfaces,
+                "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
+                "Processes": self.Processes
+            }
+        return self._cached_status
         
 
 class CPU:

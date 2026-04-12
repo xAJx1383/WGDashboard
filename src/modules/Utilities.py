@@ -70,7 +70,7 @@ def ValidateEndpointAllowedIPs(IPs) -> tuple[bool, str] | tuple[bool, None]:
 
 def GenerateWireguardPublicKey(privateKey: str) -> tuple[bool, str] | tuple[bool, None]:
     try:
-        publicKey = subprocess.check_output(f"wg pubkey", input=privateKey.encode(), shell=True,
+        publicKey = subprocess.check_output(["wg", "pubkey"], input=privateKey.encode(),
                                             stderr=subprocess.STDOUT)
         return True, publicKey.decode().strip('\n')
     except subprocess.CalledProcessError:
@@ -78,7 +78,7 @@ def GenerateWireguardPublicKey(privateKey: str) -> tuple[bool, str] | tuple[bool
     
 def GenerateWireguardPrivateKey() -> tuple[bool, str] | tuple[bool, None]:
     try:
-        publicKey = subprocess.check_output(f"wg genkey", shell=True,
+        publicKey = subprocess.check_output(["wg", "genkey"],
                                             stderr=subprocess.STDOUT)
         return True, publicKey.decode().strip('\n')
     except subprocess.CalledProcessError:
