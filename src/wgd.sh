@@ -280,6 +280,7 @@ _determinePypiMirror(){
 		"https://pypi.mirrors.ustc.edu.cn/simple/"
 		"https://mirrors.aliyun.com/pypi/simple/"
 		"https://pypi.douban.com/simple/"
+		"https://mirror-pypi.runflare.com/simple"
 	)
 
 	# Function to extract hostname and ping it
@@ -503,7 +504,7 @@ update_wgd() {
 
 		mv wgd.sh wgd.sh.old
 		printf "[WGDashboard] Downloading %s from GitHub..." "$new_ver"
-		{ date; git stash; git pull https://github.com/WGDashboard/WGDashboard.git $new_ver --force; } >> ./log/update.txt
+		{ date; git stash; git pull https://github.com/xAJx1383/WGDashboard.git $new_ver --force; } >> ./log/update.txt
 		chmod +x ./wgd.sh
 		sudo ./wgd.sh install
 		printf "[WGDashboard] Update completed!\n"
