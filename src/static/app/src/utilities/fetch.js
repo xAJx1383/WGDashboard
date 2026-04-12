@@ -42,6 +42,7 @@ export const fetchGet = async (url, params=undefined, callback=undefined) => {
 				if (x.status !== 200){
 					if (x.status === 401){
 						store.newMessage("WGDashboard", "Sign in session ended, please sign in again", "warning")
+						router.push({path: '/signin'})
 					}
 					throw new Error(x.statusText)
 				}
@@ -51,7 +52,11 @@ export const fetchGet = async (url, params=undefined, callback=undefined) => {
 		})
 		.then(x => callback ? callback(x) : undefined).catch(x => {
 			console.log("Error:", x)
-			router.push({path: '/signin'})
+			// Only redirect on actual auth errors, not on generic errors or callback exceptions
+			if (!x.message || !x.message.includes("401")) {
+				// Log the error but don't redirect - it might be a callback error
+				console.error("Non-auth error in fetchGet:", x)
+			}
 	})
 }
 
@@ -66,6 +71,7 @@ export const fetchPost = async (url, body, callback) => {
 			if (x.status !== 200){
 				if (x.status === 401){
 					store.newMessage("WGDashboard", "Sign in session ended, please sign in again", "warning")
+					router.push({path: '/signin'})
 				}
 				throw new Error(x.statusText)
 			}
@@ -74,6 +80,10 @@ export const fetchPost = async (url, body, callback) => {
 		}
 	}).then(x => callback ? callback(x) : undefined).catch(x => {
 		console.log("Error:", x)
-		router.push({path: '/signin'})
+		// Only redirect on actual auth errors, not on generic errors or callback exceptions
+		if (!x.message || !x.message.includes("401")) {
+			// Log the error but don't redirect - it might be a callback error
+			console.error("Non-auth error in fetchPost:", x)
+		}
 	})
 }

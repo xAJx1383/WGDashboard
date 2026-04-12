@@ -145,11 +145,11 @@ const networkSpeedHistoricalChartData = computed(() => {
 				</small>
 				<small class="text-info ms-auto">
 					<i class="bi bi-arrow-down-circle me-2"></i>
-					{{ historicalNetworkSpeed.bytes_recv[historicalNetworkSpeed.bytes_recv.length - 1] }} MB/s
+					{{ (historicalNetworkSpeed?.bytes_recv && historicalNetworkSpeed.bytes_recv.length > 0) ? historicalNetworkSpeed.bytes_recv[historicalNetworkSpeed.bytes_recv.length - 1] : 0 }} MB/s
 				</small>
 				<small class="text-warning">
 					<i class="bi bi-arrow-up-circle me-2"></i>
-					{{ historicalNetworkSpeed.bytes_sent[historicalNetworkSpeed.bytes_sent.length - 1] }} MB/s
+					{{ (historicalNetworkSpeed?.bytes_sent && historicalNetworkSpeed.bytes_sent.length > 0) ? historicalNetworkSpeed.bytes_sent[historicalNetworkSpeed.bytes_sent.length - 1] : 0 }} MB/s
 				</small>
 			</div>
 			<div class="card-body">

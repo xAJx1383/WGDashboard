@@ -65,21 +65,41 @@ const historicalNetworkSpeed = reactive({})
 
 const getData = async () => {
 	await fetchGet("/api/systemStatus", {}, (res) => {
+		if (!res || !res.data) {
+			console.error("Invalid systemStatus response")
+			return
+		}
+		
 		historicalChartTimestamp.value.push(dayjs().format("HH:mm:ss A"))
 		dashboardStore.SystemStatus = res.data
-		historicalCpuUsage.value.push(res.data.CPU.cpu_percent)
-		historicalVirtualMemoryUsage.value.push(res.data.Memory.VirtualMemory.percent)
-		historicalSwapMemoryUsage.value.push(res.data.Memory.SwapMemory.percent)
+		
+		// Safely access nested properties
+		if (res.data.CPU && res.data.CPU.cpu_percent !== undefined) {
+			historicalCpuUsage.value.push(res.data.CPU.cpu_percent)
+		}
+		
+		if (res.data.Memory && res.data.Memory.VirtualMemory && res.data.Memory.VirtualMemory.percent !== undefined) {
+			historicalVirtualMemoryUsage.value.push(res.data.Memory.VirtualMemory.percent)
+		}
+		
+		if (res.data.Memory && res.data.Memory.SwapMemory && res.data.Memory.SwapMemory.percent !== undefined) {
+			historicalSwapMemoryUsage.value.push(res.data.Memory.SwapMemory.percent)
+		}
 
-		for (let i of Object.keys(res.data.NetworkInterfaces)){
-			if (!Object.keys(historicalNetworkSpeed).includes(i)){
-				historicalNetworkSpeed[i] = {
-					bytes_recv: [],
-					bytes_sent: []
+		if (res.data.NetworkInterfaces) {
+			for (let i of Object.keys(res.data.NetworkInterfaces)){
+				if (!Object.keys(historicalNetworkSpeed).includes(i)){
+					historicalNetworkSpeed[i] = {
+						bytes_recv: [],
+						bytes_sent: []
+					}
+				}
+				const iface = res.data.NetworkInterfaces[i]
+				if (iface.realtime) {
+					historicalNetworkSpeed[i].bytes_recv.push(iface.realtime.recv || 0)
+					historicalNetworkSpeed[i].bytes_sent.push(iface.realtime.sent || 0)
 				}
 			}
-			historicalNetworkSpeed[i].bytes_recv.push(res.data.NetworkInterfaces[i].realtime.recv)
-			historicalNetworkSpeed[i].bytes_sent.push(res.data.NetworkInterfaces[i].realtime.sent)
 		}
 		loaded.value = true
 	})
@@ -183,21 +203,21 @@ const memoryHistoricalChartData = computed(() => {
 								<LocaleText t="CPU"></LocaleText>
 							</h3>
 							<h3 class="ms-auto mb-0">
-								<span v-if="data">
+								<span v-if="data && data.CPU">
 									{{ data.CPU.cpu_percent }}%
 								</span>
 								<span v-else class="spinner-border"></span>
 							</h3>
 						</div>
 						<div class="progress" role="progressbar" style="height: 10px">
-							<div class="progress-bar" :style="{width: `${data?.CPU.cpu_percent}%` }"></div>
+							<div class="progress-bar" :style="{width: `${data?.CPU?.cpu_percent || 0}%` }"></div>
 						</div>
 						<div class="d-flex gap-1">
 							<CpuCore
 								v-for="(cpu, count) in data?.CPU.cpu_percent_per_cpu"
 								:square="true"
 								:key="count"
-								:align="(count + 1) > Math.round(data?.CPU.cpu_percent_per_cpu.length / 2)"
+								:align="(count + 1) > Math.round((data?.CPU.cpu_percent_per_cpu?.length || 0) / 2)"
 								:core_number="count" :percentage="cpu"
 							></CpuCore>
 						</div>
@@ -242,23 +262,23 @@ const memoryHistoricalChartData = computed(() => {
 								<LocaleText t="Memory"></LocaleText>
 							</h3>
 							<h3 class="ms-auto">
-								<span v-if="data">
-									{{ data?.Memory.VirtualMemory.percent }}%
+								<span v-if="data && data?.Memory?.VirtualMemory">
+									{{ data.Memory.VirtualMemory.percent }}%
 								</span>
 								<span v-else class="spinner-border"></span>
 							</h3>
 						</div>
 						<div class="progress" role="progressbar" style="height: 10px">
-							<div class="progress-bar bg-info" :style="{width: `${data?.Memory.VirtualMemory.percent}%` }"></div>
+							<div class="progress-bar bg-info" :style="{width: `${data?.Memory?.VirtualMemory?.percent || 0}%` }"></div>
 						</div>
 						<div class="d-flex align-items-center">
 							<h6 class="mb-0">
 								<LocaleText t="Swap Memory"></LocaleText>
 							</h6>
-							<h6 class="mb-0 ms-auto">{{data?.Memory.SwapMemory.percent}}%</h6>
+							<h6 class="mb-0 ms-auto">{{data?.Memory?.SwapMemory?.percent || 0}}%</h6>
 						</div>
 						<div class="progress" role="progressbar" style="height: 10px">
-							<div class="progress-bar bg-info-subtle" :style="{width: `${data?.Memory.SwapMemory.percent}%` }"></div>
+							<div class="progress-bar bg-info-subtle" :style="{width: `${data?.Memory?.SwapMemory?.percent || 0}%` }"></div>
 						</div>
 					</div>
 					<Line
@@ -308,7 +328,7 @@ const memoryHistoricalChartData = computed(() => {
 				</div>
 				<div>
 				</div>
-				<div v-if="data" class="row g-4">
+				<div v-if="data && data.NetworkInterfaces" class="row g-4">
 					<NetworkInterface
 						v-for="key in Object.keys(data.NetworkInterfaces).sort()"
 						:interface="data.NetworkInterfaces[key]"
@@ -330,14 +350,14 @@ const memoryHistoricalChartData = computed(() => {
 						<LocaleText t="Storage"></LocaleText>
 					</h3>
 					<h3 class="ms-auto mb-0">
-							<span v-if="data">
-								<LocaleText :t="data.Disks.length + ' Partition' + (data.Disks.length > 1 ? 's':'')"></LocaleText>
+							<span v-if="data && data.Disks">
+								<LocaleText :t="(data.Disks.length || 0) + ' Partition' + ((data.Disks.length || 0) > 1 ? 's':'')"></LocaleText>
 							</span>
 							<span v-else class="spinner-border"></span>
 					</h3>
 				</div>
 				<div class="row g-3">
-					<div v-for="disk in data.Disks" class="col-sm-6 fadeIn"
+					<div v-for="disk in (data?.Disks || [])" class="col-sm-6 fadeIn"
 					     v-if="data">
 						<div class="d-flex mb-2">
 							<h6 class="mb-0">
