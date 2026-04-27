@@ -8,6 +8,7 @@ import os, secrets, subprocess, uuid, random, re
 from datetime import timedelta
 
 import jinja2
+import jinja2.sandbox
 import sqlalchemy as db
 from .PeerJob import PeerJob
 from .PeerShareLink import PeerShareLink
@@ -172,15 +173,41 @@ class Peer:
                 "H4": self.configuration.H4
             })
             
+        remote_endpoint = (self.configuration.configurationInfo.OverridePeerSettings.PeerRemoteEndpoint
+                           if self.configuration.configurationInfo.OverridePeerSettings.PeerRemoteEndpoint
+                           else self.configuration.DashboardConfig.GetConfig("Peers", "remote_endpoint")[1])
+        listen_port = (self.configuration.configurationInfo.OverridePeerSettings.ListenPort
+                       if self.configuration.configurationInfo.OverridePeerSettings.ListenPort
+                       else self.configuration.ListenPort)
+
+        # Custom Full Endpoint logic: check if the remote_endpoint already contains a port
+        has_port = False
+        if remote_endpoint.startswith("[") and "]:" in remote_endpoint:
+            has_port = True
+        elif not remote_endpoint.startswith("[") and remote_endpoint.count(":") == 1:
+            has_port = True
+
+        if has_port:
+            endpoint_str = remote_endpoint
+        else:
+            if ":" in remote_endpoint and not remote_endpoint.startswith("["):
+                # Handle IPv6 without brackets but with port? Unlikely but safer to bracket it if it looks like IPv6
+                if remote_endpoint.count(":") > 1:
+                     endpoint_str = f"[{remote_endpoint}]:{listen_port}"
+                else:
+                     endpoint_str = f"{remote_endpoint}:{listen_port}"
+            else:
+                endpoint_str = f"{remote_endpoint}:{listen_port}"
+
         peerSection = {
             "PublicKey": self.configuration.PublicKey,
             "AllowedIPs": (
                 self.configuration.configurationInfo.OverridePeerSettings.EndpointAllowedIPs
                     if self.configuration.configurationInfo.OverridePeerSettings.EndpointAllowedIPs else self.endpoint_allowed_ip
             ),
-            "Endpoint": f'{(self.configuration.configurationInfo.OverridePeerSettings.PeerRemoteEndpoint if self.configuration.configurationInfo.OverridePeerSettings.PeerRemoteEndpoint else self.configuration.DashboardConfig.GetConfig("Peers", "remote_endpoint")[1])}:{(self.configuration.configurationInfo.OverridePeerSettings.ListenPort if self.configuration.configurationInfo.OverridePeerSettings.ListenPort else self.configuration.ListenPort)}',
+            "Endpoint": endpoint_str,
             "PersistentKeepalive": (
-                self.configuration.configurationInfo.OverridePeerSettings.PersistentKeepalive 
+                self.configuration.configurationInfo.OverridePeerSettings.PersistentKeepalive
                 if self.configuration.configurationInfo.OverridePeerSettings.PersistentKeepalive
                 else self.keepalive
             ),
@@ -195,8 +222,8 @@ class Peer:
             for (key, val) in combine[s]:
                 if val is not None and ((type(val) is str and len(val) > 0) or (type(val) is int and val > 0)):
                     final["file"] += f"{key} = {val}\n"
-        
-        final["file"] = jinja2.Template(final["file"]).render(configuration=self.configuration)
+
+        final["file"] = jinja2.sandbox.SandboxedEnvironment().from_string(final["file"]).render(configuration=self.configuration)
 
 
         if self.configuration.Protocol == "awg":
@@ -212,10 +239,7 @@ class Peer:
                 }],
                 "defaultContainer": "amnezia-awg",
                 "description": self.name,
-                "hostName": (
-                    self.configuration.configurationInfo.OverridePeerSettings.PeerRemoteEndpoint 
-                        if self.configuration.configurationInfo.OverridePeerSettings.PeerRemoteEndpoint 
-                        else self.configuration.DashboardConfig.GetConfig("Peers", "remote_endpoint")[1])
+                "hostName": remote_endpoint
             })
         return final
 

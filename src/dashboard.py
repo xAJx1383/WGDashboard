@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 import sqlalchemy
 from jinja2 import Template
+import jinja2.sandbox
 from flask import Flask, request, render_template, session, send_file, g
 from flask_cors import CORS
 from icmplib import ping, traceroute
@@ -52,7 +53,7 @@ class CustomJsonEncoder(DefaultJSONProvider):
             return dict(o)
         if type(o) is datetime:
             return o.strftime("%Y-%m-%d %H:%M:%S")
-        return super().default(self)
+        return super().default(o)
 
 
 
@@ -402,18 +403,23 @@ def API_addWireguardConfiguration():
             "wg": DashboardConfig.GetConfig("Server", "wg_conf_path")[1],
             "awg": DashboardConfig.GetConfig("Server", "awg_conf_path")[1]
         }
+        
+        backup_name = data["Backup"]
+        # Prevent path traversal and ensure it ends with .conf
+        if not backup_name.endswith('.conf') or os.path.basename(backup_name) != backup_name:
+             return ResponseObject(False, "Invalid backup file name.")
 
-        if (os.path.exists(os.path.join(path['wg'], 'WGDashboard_Backup', data["Backup"])) and
-                os.path.exists(os.path.join(path['wg'], 'WGDashboard_Backup', data["Backup"].replace('.conf', '.sql')))):
+        if (os.path.exists(os.path.join(path['wg'], 'WGDashboard_Backup', backup_name)) and
+                os.path.exists(os.path.join(path['wg'], 'WGDashboard_Backup', backup_name.replace('.conf', '.sql')))):
             protocol = "wg"
-        elif (os.path.exists(os.path.join(path['awg'], 'WGDashboard_Backup', data["Backup"])) and
-              os.path.exists(os.path.join(path['awg'], 'WGDashboard_Backup', data["Backup"].replace('.conf', '.sql')))):
+        elif (os.path.exists(os.path.join(path['awg'], 'WGDashboard_Backup', backup_name)) and
+              os.path.exists(os.path.join(path['awg'], 'WGDashboard_Backup', backup_name.replace('.conf', '.sql')))):
             protocol = "awg"
         else:
             return ResponseObject(False, "Backup does not exist")
 
         shutil.copy(
-            os.path.join(path[protocol], 'WGDashboard_Backup', data["Backup"]),
+            os.path.join(path[protocol], 'WGDashboard_Backup', backup_name),
             os.path.join(path[protocol], f'{data["ConfigurationName"]}.conf')
         )
         new_config = (
@@ -1489,10 +1495,10 @@ def API_Email_Send():
             if configuration is not None:
                 fp, p = configuration.searchPeer(data.get('Peer'))
                 if fp:
-                    template = Template(body)
+                    template = jinja2.sandbox.SandboxedEnvironment().from_string(body)
                     download = p.downloadPeer()
                     body = template.render(peer=p.toJson(), configurationFile=download)
-                    subject = Template(data.get('Subject', '')).render(peer=p.toJson(), configurationFile=download)
+                    subject = jinja2.sandbox.SandboxedEnvironment().from_string(data.get('Subject', '')).render(peer=p.toJson(), configurationFile=download)
                     if data.get('IncludeAttachment', False):
                         u = str(uuid4())
                         attachmentName = f'{u}.conf'
@@ -1520,11 +1526,10 @@ def API_Email_PreviewBody():
         return ResponseObject(False, "Peer does not exist")
 
     try:
-        template = Template(body)
         download = p.downloadPeer()
         return ResponseObject(data={
-            "Body": Template(body).render(peer=p.toJson(), configurationFile=download),
-            "Subject": Template(subject).render(peer=p.toJson(), configurationFile=download)
+            "Body": jinja2.sandbox.SandboxedEnvironment().from_string(body).render(peer=p.toJson(), configurationFile=download),
+            "Subject": jinja2.sandbox.SandboxedEnvironment().from_string(subject).render(peer=p.toJson(), configurationFile=download)
         })
     except Exception as e:
         return ResponseObject(False, message=str(e))

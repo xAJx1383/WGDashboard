@@ -4,6 +4,7 @@ WireGuard Configuration
 from typing import Any
 
 import jinja2
+import jinja2.sandbox
 import sqlalchemy, random, shutil, configparser, ipaddress, os, subprocess, time, re, uuid, psutil, traceback
 from zipfile import ZipFile
 from datetime import datetime, timedelta
@@ -1224,7 +1225,7 @@ class WireguardConfiguration:
         elif key == "OverridePeerSettings":
             for (key, val) in value.items():
                 try:
-                    status, msg = self.__validateOverridePeerSettings(key, jinja2.Template(val).render(configuration=self.toJson()))
+                    status, msg = self.__validateOverridePeerSettings(key, jinja2.sandbox.SandboxedEnvironment().from_string(val).render(configuration=self.toJson()))
                     if not status:
                         return False, msg, key
                 except Exception as e:

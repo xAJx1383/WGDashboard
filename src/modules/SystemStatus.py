@@ -1,5 +1,7 @@
-import shutil, subprocess, time, threading, psutil
+import shutil, subprocess, time, threading, psutil, logging
 from flask import current_app
+
+logger = logging.getLogger(__name__)
 
 class SystemStatus:
     def __init__(self):
@@ -42,8 +44,7 @@ class SystemStatus:
                 "Processes": self.Processes.toJson()
             }
         except Exception as e:
-            if hasattr(current_app, 'logger'):
-                current_app.logger.error(f"SystemStatus initial data collection error: {e}", exc_info=True)
+            logger.error(f"SystemStatus initial data collection error: {e}", exc_info=True)
         
         # Start background monitoring thread
         self._stop_event = threading.Event()
@@ -87,12 +88,10 @@ class SystemStatus:
                         "Processes": self.Processes.toJson()
                     }
                 except Exception as cache_error:
-                    if hasattr(current_app, 'logger'):
-                        current_app.logger.error(f"SystemStatus cache update error: {cache_error}", exc_info=True)
+                    logger.error(f"SystemStatus cache update error: {cache_error}", exc_info=True)
             except Exception as e:
                 # Log error but keep thread alive
-                if hasattr(current_app, 'logger'):
-                    current_app.logger.error(f"SystemStatus monitoring loop error: {e}", exc_info=True)
+                logger.error(f"SystemStatus monitoring loop error: {e}", exc_info=True)
 
             self._stop_event.wait(5)
 
@@ -113,8 +112,7 @@ class SystemStatus:
                     "Processes": self.Processes.toJson()
                 }
             except Exception as e:
-                if hasattr(current_app, 'logger'):
-                    current_app.logger.error(f"SystemStatus toJson fallback error: {e}", exc_info=True)
+                logger.error(f"SystemStatus toJson fallback error: {e}", exc_info=True)
                 # Return minimal safe structure
                 return {
                     "CPU": {"cpu_percent": 0, "cpu_percent_per_cpu": []},
@@ -139,13 +137,13 @@ class CPU:
         try:
             self.cpu_percent = psutil.cpu_percent(interval=1)
         except Exception as e:
-            current_app.logger.error(f"Get CPU Percent error: {e}", exc_info=True)
+            logger.error(f"Get CPU Percent error: {e}", exc_info=True)
     
     def getPerCPUPercent(self):
         try:
             self.cpu_percent_per_cpu = psutil.cpu_percent(interval=1, percpu=True)
         except Exception as e:
-            current_app.logger.error(f"Get Per CPU Percent error: {e}", exc_info=True)
+            logger.error(f"Get Per CPU Percent error: {e}", exc_info=True)
     
     def toJson(self):
         return self.__dict__
@@ -168,7 +166,7 @@ class Memory:
 
             self.percent = memory.percent
         except Exception as e:
-            current_app.logger.error(f"Get Memory percent error: {e}", exc_info=True)
+            logger.error(f"Get Memory percent error: {e}", exc_info=True)
     def toJson(self):
         return self.__dict__
 
@@ -184,7 +182,7 @@ class Disks:
             # Filter out disks that couldn't be accessed (percent = 0 and total = 0)
             self.disks = [disk for disk in self.disks if disk.total > 0]
         except Exception as e:
-            current_app.logger.error(f"Get Disk percent error: {e}", exc_info=True)
+            logger.error(f"Get Disk percent error: {e}", exc_info=True)
     def toJson(self):
         return self.disks
 
@@ -204,12 +202,10 @@ class Disk:
             self.percent = disk.percent
         except (PermissionError, OSError) as e:
             # Skip inaccessible mount points (common on Linux for certain partitions)
-            if hasattr(current_app, 'logger'):
-                current_app.logger.debug(f"Cannot access {self.mountPoint}: {e}")
+            logger.debug(f"Cannot access {self.mountPoint}: {e}")
             self.percent = 0
         except Exception as e:
-            if hasattr(current_app, 'logger'):
-                current_app.logger.error(f"Get Disk usage error for {self.mountPoint}: {e}", exc_info=True)
+            logger.error(f"Get Disk usage error for {self.mountPoint}: {e}", exc_info=True)
             self.percent = 0
     def toJson(self):
         return self.__dict__
@@ -246,7 +242,7 @@ class NetworkInterfaces:
                     'recv': round((network[i].bytes_recv - self.interfaces[i]['bytes_recv']) / 1024 / 1024, 4)
                 }
         except Exception as e:
-            current_app.logger.error(f"Get network error: {e}", exc_info=True)
+            logger.error(f"Get network error: {e}", exc_info=True)
 
     def toJson(self):
         return self.interfaces
@@ -299,7 +295,7 @@ class Processes:
             self.Memory_Top_Processes = mem_sorted[:20]
 
         except Exception as e:
-            current_app.logger.error(f"Get processes error: {e}", exc_info=True)
+            logger.error(f"Get processes error: {e}", exc_info=True)
 
     def toJson(self):
         return {
