@@ -52,45 +52,31 @@ class SystemStatus:
         self._monitoring_thread.start()
 
     def _monitor_loop(self):
-        """Background thread to update metrics every 5 seconds."""
+        """Background thread to update metrics sequentially to avoid thread pile-up."""
         while not self._stop_event.is_set():
             try:
-                # Spawn threads for intense tasks to keep monitoring loop responsive
-                threads = [
-                    threading.Thread(target=self.CPU.getCPUPercent),
-                    threading.Thread(target=self.CPU.getPerCPUPercent),
-                    threading.Thread(target=self.NetworkInterfaces.getData)
-                ]
-                for t in threads:
-                    t.start()
-
-                # Other non-blocking updates
+                # Update metrics sequentially
+                self.CPU.getCPUPercent()
+                self.CPU.getPerCPUPercent()
+                self.NetworkInterfaces.getData()
                 self.MemoryVirtual.getData()
                 self.MemorySwap.getData()
                 self.Disks.getData()
                 self.Processes.getData()
 
-                # Wait for threaded tasks with increased timeout (NetworkInterfaces has 1s sleep)
-                for t in threads:
-                    t.join(timeout=3)
-# Update cache with defensive error handling
-try:
-    new_cache = {
-        "CPU": self.CPU.toJson(),
-        "Memory": {
-            "VirtualMemory": self.MemoryVirtual.toJson(),
-            "SwapMemory": self.MemorySwap.toJson()
-        },
-        "Disks": self.Disks.toJson(),
-        "NetworkInterfaces": self.NetworkInterfaces.toJson(),
-        "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
-        "Processes": self.Processes.toJson()
-    }
-    self._cached_status = new_cache
-except Exception as cache_error:
-    logger.error(f"SystemStatus cache update error: {cache_error}", exc_info=True)
+                # Build cache in one atomic operation
+                self._cached_status = {
+                    "CPU": self.CPU.toJson(),
+                    "Memory": {
+                        "VirtualMemory": self.MemoryVirtual.toJson(),
+                        "SwapMemory": self.MemorySwap.toJson()
+                    },
+                    "Disks": self.Disks.toJson(),
+                    "NetworkInterfaces": self.NetworkInterfaces.toJson(),
+                    "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
+                    "Processes": self.Processes.toJson()
+                }
             except Exception as e:
-                # Log error but keep thread alive
                 logger.error(f"SystemStatus monitoring loop error: {e}", exc_info=True)
 
             self._stop_event.wait(5)
@@ -195,6 +181,9 @@ class Disk:
         self.mountPoint = mountPoint
     def getData(self):
         try:
+            # Skip virtual/pseudo filesystems that might hang or are irrelevant
+            if self.mountPoint.startswith(('/proc', '/sys', '/dev', '/run', '/boot')):
+                return
             disk = psutil.disk_usage(self.mountPoint)
             self.total = disk.total
             self.free = disk.free
@@ -264,18 +253,17 @@ class Processes:
         self.Memory_Top_Processes: list[Process] = []
     def getData(self):
         try:
-            processes = list(psutil.process_iter())
-
             cpu_processes = []
             memory_processes = []
 
-            for proc in processes:
+            for proc in psutil.process_iter(['name', 'cmdline', 'pid', 'cpu_percent', 'memory_percent']):
                 try:
-                    name = proc.name()
-                    cmdline = " ".join(proc.cmdline())
-                    pid = proc.pid
-                    cpu_percent = proc.cpu_percent()
-                    mem_percent = proc.memory_percent()
+                    info = proc.info
+                    name = info['name']
+                    cmdline = " ".join(info['cmdline']) if info['cmdline'] else ""
+                    pid = info['pid']
+                    cpu_percent = info['cpu_percent']
+                    mem_percent = info['memory_percent']
 
                     # Create Process object for CPU and memory tracking
                     cpu_process = Process(name, cmdline, pid, cpu_percent)

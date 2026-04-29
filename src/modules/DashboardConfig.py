@@ -17,7 +17,7 @@ from .DashboardAPIKey import DashboardAPIKey
 
 class DashboardConfig:
     DashboardVersion = 'v4.3.1'
-    ConfigurationPath = os.getenv('CONFIGURATION_PATH', '.')
+    ConfigurationPath = os.path.abspath(os.getenv('CONFIGURATION_PATH', '.'))
     ConfigurationFilePath = os.path.join(ConfigurationPath, 'wg-dashboard.ini')
     
     def __init__(self):
@@ -221,9 +221,9 @@ class DashboardConfig:
             if not os.path.exists(value):
                 return False, "Path does not exist"
 
-        if section not in self.__config:
+        if section not in self.__config.sections():
             if init:
-                self.__config[section] = {}
+                self.__config.add_section(section)
             else:
                 return False, "Section does not exist"
 

@@ -264,6 +264,7 @@ def auth_req():
                 is_whitelisted = True
 
             if not is_whitelisted and ("username" not in session or session.get("role") != "admin"):
+                app.logger.warning(f"Access Denied to {path}. Session: {('Missing' if 'username' not in session else 'Invalid')}. Cookie Token: {('Present' if token else 'Missing')}")
                 return ResponseObject(False, "Unauthorized access.", status_code=401)
 
 @app.route(f'{APP_PREFIX}/api/handshake', methods=["GET", "OPTIONS"])
