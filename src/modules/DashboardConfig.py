@@ -243,13 +243,14 @@ class DashboardConfig:
             return self.SaveConfig(), ""
         else:
             return False, f"{key} does not exist under {section}"
-
     def SaveConfig(self) -> bool:
         try:
             with open(DashboardConfig.ConfigurationFilePath, "w+", encoding='utf-8') as configFile:
                 self.__config.write(configFile)
             return True
         except Exception as e:
+            if hasattr(current_app, 'logger'):
+                 current_app.logger.error(f"Failed to save configuration to {DashboardConfig.ConfigurationFilePath}: {e}")
             return False
 
     def GetConfig(self, section, key) ->tuple[bool, bool] | tuple[bool, str] | tuple[bool, list[str]] | tuple[bool, None]:

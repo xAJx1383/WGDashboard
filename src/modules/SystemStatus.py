@@ -73,22 +73,22 @@ class SystemStatus:
                 # Wait for threaded tasks with increased timeout (NetworkInterfaces has 1s sleep)
                 for t in threads:
                     t.join(timeout=3)
-
-                # Update cache with defensive error handling
-                try:
-                    self._cached_status = {
-                        "CPU": self.CPU.toJson(),
-                        "Memory": {
-                            "VirtualMemory": self.MemoryVirtual.toJson(),
-                            "SwapMemory": self.MemorySwap.toJson()
-                        },
-                        "Disks": self.Disks.toJson(),
-                        "NetworkInterfaces": self.NetworkInterfaces.toJson(),
-                        "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
-                        "Processes": self.Processes.toJson()
-                    }
-                except Exception as cache_error:
-                    logger.error(f"SystemStatus cache update error: {cache_error}", exc_info=True)
+# Update cache with defensive error handling
+try:
+    new_cache = {
+        "CPU": self.CPU.toJson(),
+        "Memory": {
+            "VirtualMemory": self.MemoryVirtual.toJson(),
+            "SwapMemory": self.MemorySwap.toJson()
+        },
+        "Disks": self.Disks.toJson(),
+        "NetworkInterfaces": self.NetworkInterfaces.toJson(),
+        "NetworkInterfacesPriority": self.NetworkInterfaces.getInterfacePriorities(),
+        "Processes": self.Processes.toJson()
+    }
+    self._cached_status = new_cache
+except Exception as cache_error:
+    logger.error(f"SystemStatus cache update error: {cache_error}", exc_info=True)
             except Exception as e:
                 # Log error but keep thread alive
                 logger.error(f"SystemStatus monitoring loop error: {e}", exc_info=True)
@@ -229,18 +229,20 @@ class NetworkInterfaces:
         return {}
 
     def getData(self):
-        self.interfaces.clear()
+        new_interfaces = {}
         try:
             network = psutil.net_io_counters(pernic=True, nowrap=True)
             for i in network.keys():
-                self.interfaces[i] = network[i]._asdict()
+                new_interfaces[i] = network[i]._asdict()
             time.sleep(1)
             network = psutil.net_io_counters(pernic=True, nowrap=True)
             for i in network.keys():
-                self.interfaces[i]['realtime'] = {
-                    'sent': round((network[i].bytes_sent - self.interfaces[i]['bytes_sent']) / 1024 / 1024, 4),
-                    'recv': round((network[i].bytes_recv - self.interfaces[i]['bytes_recv']) / 1024 / 1024, 4)
-                }
+                if i in new_interfaces:
+                    new_interfaces[i]['realtime'] = {
+                        'sent': round((network[i].bytes_sent - new_interfaces[i]['bytes_sent']) / 1024 / 1024, 4),
+                        'recv': round((network[i].bytes_recv - new_interfaces[i]['bytes_recv']) / 1024 / 1024, 4)
+                    }
+            self.interfaces = new_interfaces
         except Exception as e:
             logger.error(f"Get network error: {e}", exc_info=True)
 

@@ -1536,7 +1536,12 @@ def API_Email_PreviewBody():
 
 @app.get(f'{APP_PREFIX}/api/systemStatus')
 def API_SystemStatus():
-    return ResponseObject(data=SystemStatus.toJson())
+    try:
+        data = SystemStatus.toJson()
+        return ResponseObject(data=data)
+    except Exception as e:
+        app.logger.error(f"SystemStatus API error: {e}", exc_info=True)
+        return ResponseObject(False, f"Error retrieving system status: {e}", status_code=500)
 
 @app.get(f'{APP_PREFIX}/api/protocolsEnabled')
 def API_ProtocolsEnabled():
