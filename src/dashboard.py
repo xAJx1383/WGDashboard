@@ -91,9 +91,7 @@ def peerInformationBackgroundThread():
                     if name in configs_snapshot:
                         c = configs_snapshot.get(name)
                         if c.getStatus():
-                            c.getPeersLatestHandshake()
-                            c.getPeersTransfer()
-                            c.getPeersEndpoint()
+                            c.updatePeersData()
                             c.getPeers()
                             if delay == 6:
                                 if c.configurationInfo.PeerTrafficTracking:
@@ -509,15 +507,14 @@ def API_deleteWireguardConfiguration():
     if config_name is None or config_name not in WireguardConfigurations:
         return ResponseObject(False, "Please provide the configuration name you want to delete", status_code=404)
     with _wireguard_config_lock:
-        rp = WireguardConfigurations.pop(config_name, None)
+        rp = WireguardConfigurations.get(config_name)
         if rp is None:
             return ResponseObject(False, "Configuration does not exist", status_code=404)
 
-    status = rp.deleteConfiguration()
-    with _wireguard_config_lock:
-        if not status:
-            WireguardConfigurations[config_name] = rp
-    return ResponseObject(status)
+        status = rp.deleteConfiguration()
+        if status:
+            WireguardConfigurations.pop(config_name)
+        return ResponseObject(status)
 
 @app.post(f'{APP_PREFIX}/api/renameWireguardConfiguration')
 def API_renameWireguardConfiguration():
@@ -534,17 +531,16 @@ def API_renameWireguardConfiguration():
     with _wireguard_config_lock:
         if new_name in WireguardConfigurations:
             return ResponseObject(False, "Configuration name already exist", status_code=400)
-        rc = WireguardConfigurations.pop(old_name, None)
+        rc = WireguardConfigurations.get(old_name)
         if rc is None:
             return ResponseObject(False, "Configuration does not exist", status_code=404)
 
-    status, message = rc.renameConfiguration(new_name)
-    with _wireguard_config_lock:
+        status, message = rc.renameConfiguration(new_name)
         if status:
+            WireguardConfigurations.pop(old_name)
             WireguardConfigurations[new_name] = (WireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, new_name) if rc.Protocol == 'wg' else AmneziaWireguardConfiguration(DashboardConfig, AllPeerJobs, AllPeerShareLinks, DashboardWebHooks, new_name))
-        else:
-            WireguardConfigurations[old_name] = rc
-    return ResponseObject(status, message)
+        
+        return ResponseObject(status, message)
 
 @app.get(f'{APP_PREFIX}/api/getWireguardConfigurationRealtimeTraffic')
 def API_getWireguardConfigurationRealtimeTraffic():
@@ -1066,7 +1062,7 @@ def API_GetPeerHistoricalEndpoints():
         geo = {}
         try:
             r = requests.post(f"http://ip-api.com/batch?fields=city,country,lat,lon,query",
-                              data=json.dumps([x['endpoint'] for x in result]))
+                              data=json.dumps([x['endpoint'] for x in result]), timeout=5)
             d = r.json()
             
                 
@@ -1311,7 +1307,7 @@ def API_ping_execute():
                     "geo": None
                 }
                 try:
-                    r = requests.get(f"http://ip-api.com/json/{result.address}?field=city")
+                    r = requests.get(f"http://ip-api.com/json/{result.address}?field=city", timeout=5)
                     data['geo'] = r.json()
                 except Exception as e:
                     pass
@@ -1354,7 +1350,7 @@ def API_traceroute_execute():
                     })
             try:
                 r = requests.post(f"http://ip-api.com/batch?fields=city,country,lat,lon,query",
-                                  data=json.dumps([x['ip'] for x in result]))
+                                  data=json.dumps([x['ip'] for x in result]), timeout=5)
                 d = r.json()
                 for i in range(len(result)):
                     result[i]['geo'] = d[i]  

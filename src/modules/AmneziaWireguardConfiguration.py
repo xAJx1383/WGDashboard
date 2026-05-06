@@ -296,11 +296,11 @@ class AmneziaWireguardConfiguration(WireguardConfiguration):
                 try:
                     cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
                     cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
-                    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                    subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=10)
                 finally:
                     if temp_psk_path and os.path.exists(temp_psk_path):
                         os.remove(temp_psk_path)
-            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT)
+            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT, timeout=10)
             self.getPeers()
             for p in peers:
                 p = self.searchPeer(p['id'])

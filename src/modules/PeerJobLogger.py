@@ -8,12 +8,12 @@ import sqlalchemy as db
 from flask import current_app
 from sqlalchemy import RowMapping
 
-from .ConnectionString import ConnectionString
+from .ConnectionString import ConnectionString, CreateEngine
 from .Log import Log
 
 class PeerJobLogger:
     def __init__(self, AllPeerJobs, DashboardConfig):
-        self.engine = db.create_engine(ConnectionString("wgdashboard_log"))                
+        self.engine = CreateEngine(ConnectionString("wgdashboard_log"))                
         self.metadata = db.MetaData()
         self.jobLogTable = db.Table('JobLog', self.metadata,
                                     db.Column('LogID', db.String(255), nullable=False, primary_key=True),

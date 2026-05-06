@@ -3,12 +3,12 @@ import hashlib
 import uuid
 
 import sqlalchemy as db
-from .ConnectionString import ConnectionString
+from .ConnectionString import ConnectionString, CreateEngine
 
 
 class DashboardClientsTOTP:
     def __init__(self):
-        self.engine = db.create_engine(ConnectionString("wgdashboard"))
+        self.engine = CreateEngine(ConnectionString("wgdashboard"))
         self.metadata = db.MetaData()
         self.dashboardClientsTOTPTable = db.Table(
             'DashboardClientsTOTPTokens', self.metadata,

@@ -3,7 +3,7 @@ Peer Jobs
 """
 import sqlalchemy
 
-from .ConnectionString import ConnectionString
+from .ConnectionString import ConnectionString, CreateEngine
 from .PeerJob import PeerJob
 from .PeerJobLogger import PeerJobLogger
 import sqlalchemy as db
@@ -13,7 +13,7 @@ from flask import current_app
 class PeerJobs:
     def __init__(self, DashboardConfig, WireguardConfigurations, AllPeerShareLinks):
         self.Jobs: list[PeerJob] = []
-        self.engine = db.create_engine(ConnectionString('wgdashboard_job'))
+        self.engine = CreateEngine(ConnectionString('wgdashboard_job'))
         self.metadata = db.MetaData()
         self.peerJobTable = db.Table('PeerJobs', self.metadata,
                                      db.Column('JobID', db.String(255), nullable=False, primary_key=True),

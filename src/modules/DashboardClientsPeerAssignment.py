@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from .ConnectionString import ConnectionString
+from .ConnectionString import ConnectionString, CreateEngine
 from .DashboardLogger import DashboardLogger
 import sqlalchemy as db
 from .WireguardConfiguration import WireguardConfiguration
@@ -31,7 +31,7 @@ class Assignment:
 class DashboardClientsPeerAssignment:
     def __init__(self, wireguardConfigurations: dict[str, WireguardConfiguration]):
         self.logger = DashboardLogger()
-        self.engine = db.create_engine(ConnectionString("wgdashboard"))
+        self.engine = CreateEngine(ConnectionString("wgdashboard"))
         self.metadata = db.MetaData()
         self.wireguardConfigurations = wireguardConfigurations
         self.dashboardClientsPeerAssignmentTable = db.Table(

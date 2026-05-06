@@ -1,5 +1,7 @@
 import configparser
 import os
+import sqlalchemy as db
+from sqlalchemy import event
 from sqlalchemy_utils import database_exists, create_database
 from flask import current_app
 
@@ -23,3 +25,13 @@ def ConnectionString(database) -> str:
         exit(1)
         
     return cn
+
+def CreateEngine(connection_string, **kwargs) -> db.Engine:
+    engine = db.create_engine(connection_string, **kwargs)
+    if engine.url.drivername == 'sqlite':
+        @event.listens_for(engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.close()
+    return engine

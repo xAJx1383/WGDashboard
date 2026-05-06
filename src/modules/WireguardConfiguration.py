@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from itertools import islice
 from flask import current_app
 
-from .ConnectionString import ConnectionString
+from .ConnectionString import ConnectionString, CreateEngine
 from .DashboardConfig import DashboardConfig
 from .Peer import Peer
 from .PeerJobs import PeerJobs
@@ -65,7 +65,7 @@ class WireguardConfiguration:
         self.AllPeerShareLinks = AllPeerShareLinks
         self.DashboardWebHooks = DashboardWebHooks
         self.configPath = os.path.join(self.__getProtocolPath(), f'{self.Name}.conf')
-        self.engine: sqlalchemy.Engine = sqlalchemy.create_engine(ConnectionString("wgdashboard"))
+        self.engine: sqlalchemy.Engine = CreateEngine(ConnectionString("wgdashboard"))
         self.metadata: sqlalchemy.MetaData = sqlalchemy.MetaData()
         self.dbType = self.DashboardConfig.GetConfig("Database", "type")[1]
         
@@ -578,11 +578,11 @@ class WireguardConfiguration:
                 try:
                     cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
                     cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
-                    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                    subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=10)
                 finally:
                     if temp_psk_path and os.path.exists(temp_psk_path):
                         os.remove(temp_psk_path)
-            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT)
+            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT, timeout=10)
             self.getPeers()
             for p in peers:
                 p = self.searchPeer(p['id'])
@@ -635,7 +635,7 @@ class WireguardConfiguration:
                     try:
                         cmd = [self.Protocol, "set", self.Name, "peer", restrictedPeer['id'], "allowed-ips", restrictedPeer['allowed_ip'].replace(' ', '')]
                         cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
-                        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                        subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=10)
                     finally:
                         if temp_psk_path and os.path.exists(temp_psk_path):
                             os.remove(temp_psk_path)
@@ -658,7 +658,7 @@ class WireguardConfiguration:
                 if found:
                     try:
                         subprocess.check_output([self.Protocol, "set", self.Name, "peer", pf.id, "remove"],
-                                                stderr=subprocess.STDOUT)
+                                                stderr=subprocess.STDOUT, timeout=10)
                         conn.execute(
                             self.peersRestrictedTable.insert().from_select(
                                 [c.name for c in self.peersTable.columns],
@@ -710,7 +710,7 @@ class WireguardConfiguration:
                 if found:
                     try:
                         subprocess.check_output([self.Protocol, "set", self.Name, "peer", pf.id, "remove"],
-                                                stderr=subprocess.STDOUT)
+                                                stderr=subprocess.STDOUT, timeout=10)
                         conn.execute(
                             self.peersTable.delete().where(
                                 self.peersTable.columns.id == pf.id
@@ -740,9 +740,9 @@ class WireguardConfiguration:
 
     def __wgSave(self) -> tuple[bool, str] | tuple[bool, None]:
         try:
-            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT)
+            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT, timeout=10)
             return True, None
-        except subprocess.CalledProcessError as e:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             return False, str(e)
 
     def getPeersLatestHandshake(self):
@@ -750,8 +750,8 @@ class WireguardConfiguration:
             self.toggleConfiguration()
         try:
             latestHandshake = subprocess.check_output([self.Protocol, "show", self.Name, "latest-handshakes"],
-                                                      stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+                                                      stderr=subprocess.STDOUT, timeout=10)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             return "stopped"
         latestHandshake = latestHandshake.decode("UTF-8").split()
         count = 0
@@ -788,9 +788,11 @@ class WireguardConfiguration:
     def getPeersTransfer(self):
         if not self.getStatus():
             self.toggleConfiguration()
-        # try:
-        data_usage = subprocess.check_output([self.Protocol, "show", self.Name, "transfer"],
-                                             stderr=subprocess.STDOUT)
+        try:
+            data_usage = subprocess.check_output([self.Protocol, "show", self.Name, "transfer"],
+                                                 stderr=subprocess.STDOUT, timeout=10)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            return "stopped"
         data_usage = data_usage.decode("UTF-8").split("\n")
         
         data_usage = [p.split("\t") for p in data_usage]
@@ -848,8 +850,8 @@ class WireguardConfiguration:
             self.toggleConfiguration()
         try:
             data_usage = subprocess.check_output([self.Protocol, "show", self.Name, "endpoints"],
-                                                 stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+                                                 stderr=subprocess.STDOUT, timeout=10)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             return "stopped"
         data_usage = data_usage.decode("UTF-8").split()
         count = 0
@@ -864,21 +866,89 @@ class WireguardConfiguration:
                 )
                 count += 2
 
+    def updatePeersData(self):
+        if not self.getStatus():
+            return
+        try:
+            dump = subprocess.check_output([self.Protocol, "show", self.Name, "dump"],
+                                           stderr=subprocess.STDOUT, timeout=10).decode("UTF-8").strip().split("\n")
+            if len(dump) < 2:
+                return
+            
+            now = datetime.now()
+            time_delta = timedelta(minutes=3)
+            
+            with self.engine.begin() as conn:
+                for line in dump[1:]:
+                    parts = line.split("\t")
+                    if len(parts) < 8:
+                        continue
+                    
+                    peer_id = parts[0]
+                    endpoint = parts[2]
+                    latest_handshake_ts = int(parts[4])
+                    transfer_rx = int(parts[5])
+                    transfer_tx = int(parts[6])
+                    
+                    minus = now - datetime.fromtimestamp(latest_handshake_ts)
+                    status = "running" if minus < time_delta else "stopped"
+                    handshake_str = str(minus).split(".", maxsplit=1)[0] if latest_handshake_ts > 0 else "No Handshake"
+
+                    cur_i = conn.execute(
+                        self.peersTable.select().where(self.peersTable.c.id == peer_id)
+                    ).mappings().fetchone()
+                    
+                    if cur_i:
+                        total_sent = cur_i['total_sent']
+                        total_receive = cur_i['total_receive']
+                        cur_total_sent = float(transfer_tx) / (1024 ** 3)
+                        cur_total_receive = float(transfer_rx) / (1024 ** 3)
+                        
+                        cumulative_receive = cur_i['cumu_receive'] + total_receive
+                        cumulative_sent = cur_i['cumu_sent'] + total_sent
+                        
+                        if total_sent <= cur_total_sent and total_receive <= cur_total_receive:
+                            total_sent = cur_total_sent
+                            total_receive = cur_total_receive
+                        else:
+                            conn.execute(
+                                self.peersTable.update().values({
+                                    "cumu_receive": cumulative_receive,
+                                    "cumu_sent": cumulative_sent,
+                                    "cumu_data": cumulative_sent + cumulative_receive
+                                }).where(self.peersTable.c.id == peer_id)
+                            )
+                            total_sent = 0
+                            total_receive = 0
+                        
+                        conn.execute(
+                            self.peersTable.update().values({
+                                "latest_handshake": handshake_str,
+                                "status": status,
+                                "endpoint": endpoint,
+                                "total_receive": total_receive,
+                                "total_sent": total_sent,
+                                "total_data": total_receive + total_sent
+                            }).where(self.peersTable.c.id == peer_id)
+                        )
+        except Exception as e:
+            current_app.logger.error(f"Failed to update peers data for {self.Name}: {e}")
+
     def toggleConfiguration(self) -> tuple[bool, str] | tuple[bool, None]:
         self.getStatus()
         if self.Status:
             try:
                 check = subprocess.check_output([f"{self.Protocol}-quick", "down", self.Name],
-                                                stderr=subprocess.STDOUT)
+                                                stderr=subprocess.STDOUT, timeout=10)
                 self.removeAutostart()
-            except subprocess.CalledProcessError as exc:
-                return False, str(exc.output.strip().decode("utf-8"))
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+                return False, str(exc.output.strip().decode("utf-8")) if hasattr(exc, 'output') else str(exc)
         else:
             try:
-                check = subprocess.check_output([f"{self.Protocol}-quick", "up", self.Name], stderr=subprocess.STDOUT)
+                check = subprocess.check_output([f"{self.Protocol}-quick", "up", self.Name], stderr=subprocess.STDOUT, timeout=10)
                 self.addAutostart()
-            except subprocess.CalledProcessError as exc:
-                return False, str(exc.output.strip().decode("utf-8"))
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+                return False, str(exc.output.strip().decode("utf-8")) if hasattr(exc, 'output') else str(exc)
         self.__parseConfigurationFile()
         self.getStatus()
         return True, None

@@ -98,12 +98,12 @@ class Peer:
             newAllowedIPs = allowed_ip.replace(" ", "")
             cmd = [self.configuration.Protocol, "set", self.configuration.Name, "peer", self.id, "allowed-ips", newAllowedIPs]
             cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
-            updateAllowedIp = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            updateAllowedIp = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=10)
 
             if len(updateAllowedIp.decode().strip("\n")) != 0:
                 return False, "Update peer failed when updating Allowed IPs"
             saveConfig = subprocess.check_output([f"{self.configuration.Protocol}-quick", "save", self.configuration.Name],
-                                                 stderr=subprocess.STDOUT)
+                                                 stderr=subprocess.STDOUT, timeout=10)
             if f"wg showconf {self.configuration.Name}" not in saveConfig.decode().strip('\n'):
                 return False, "Update peer failed when saving the configuration"
             with self.configuration.engine.begin() as conn:
@@ -121,8 +121,8 @@ class Peer:
                     )
                 )
             return True, None
-        except subprocess.CalledProcessError as exc:
-            return False, exc.output.decode("UTF-8").strip()
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+            return False, exc.output.decode("UTF-8").strip() if hasattr(exc, 'output') else str(exc)
         finally:
             if temp_psk_path and os.path.exists(temp_psk_path):
                 os.remove(temp_psk_path)

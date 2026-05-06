@@ -71,19 +71,18 @@ def ValidateEndpointAllowedIPs(IPs) -> tuple[bool, str] | tuple[bool, None]:
 def GenerateWireguardPublicKey(privateKey: str) -> tuple[bool, str] | tuple[bool, None]:
     try:
         publicKey = subprocess.check_output(["wg", "pubkey"], input=privateKey.encode(),
-                                            stderr=subprocess.STDOUT)
+                                            stderr=subprocess.STDOUT, timeout=10)
         return True, publicKey.decode().strip('\n')
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False, None
-    
+
 def GenerateWireguardPrivateKey() -> tuple[bool, str] | tuple[bool, None]:
     try:
         publicKey = subprocess.check_output(["wg", "genkey"],
-                                            stderr=subprocess.STDOUT)
+                                            stderr=subprocess.STDOUT, timeout=10)
         return True, publicKey.decode().strip('\n')
-    except subprocess.CalledProcessError:
-        return False, None
-    
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return False, None    
 def ValidatePasswordStrength(password: str) -> tuple[bool, str] | tuple[bool, None]:
     # Rules:
     #     - Must be over 8 characters & numbers

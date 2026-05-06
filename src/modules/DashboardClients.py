@@ -8,7 +8,7 @@ import pyotp
 import sqlalchemy as db
 import requests
 
-from .ConnectionString import ConnectionString
+from .ConnectionString import ConnectionString, CreateEngine
 from .DashboardClientsPeerAssignment import DashboardClientsPeerAssignment
 from .DashboardClientsTOTP import DashboardClientsTOTP
 from .DashboardOIDC import DashboardOIDC
@@ -20,7 +20,7 @@ from flask import session
 class DashboardClients:
     def __init__(self, wireguardConfigurations):
         self.logger = DashboardLogger()
-        self.engine = db.create_engine(ConnectionString("wgdashboard"))
+        self.engine = CreateEngine(ConnectionString("wgdashboard"))
         self.metadata = db.MetaData()
         self.OIDC = DashboardOIDC("Client")
         
@@ -201,7 +201,8 @@ class DashboardClients:
             oidc_config.get("end_session_endpoint"), 
             params={
                 'id_token_hint': session.get('SignInPayload').get("Payload").get('sid')
-            }
+            },
+            timeout=5
         )
         return True
         
