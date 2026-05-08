@@ -1294,7 +1294,7 @@ class WireguardConfiguration:
                     # hosts() is a generator, so we only consume until we find 'threshold' items
                     available = islice(
                         filter(lambda ip_str: ip_str not in existedAddress, 
-                               map(lambda ip: str(ip), network.hosts())),
+                               map(lambda ip: f"{ip}/{ip.max_prefixlen}", network.hosts())),
                         threshold
                     )
                     availableAddress[ca] = list(available)
