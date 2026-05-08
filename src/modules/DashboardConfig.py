@@ -1,7 +1,7 @@
 """
 Dashboard Configuration
 """
-import configparser, secrets, os, pyotp, ipaddress, bcrypt
+import configparser, secrets, os, pyotp, ipaddress, bcrypt, threading
 from sqlalchemy_utils import database_exists, create_database
 import sqlalchemy as db
 from datetime import datetime
@@ -21,10 +21,14 @@ class DashboardConfig:
     ConfigurationFilePath = os.path.join(ConfigurationPath, 'wg-dashboard.ini')
     
     def __init__(self):
-        if not os.path.exists(DashboardConfig.ConfigurationFilePath):
-            open(DashboardConfig.ConfigurationFilePath, "x")
-        self.__config = configparser.RawConfigParser(strict=False)
-        self.__config.read_file(open(DashboardConfig.ConfigurationFilePath, "r+"))
+        self._lock = threading.RLock()
+        with self._lock:
+            if not os.path.exists(DashboardConfig.ConfigurationFilePath):
+                with open(DashboardConfig.ConfigurationFilePath, "x") as f:
+                    pass
+            self.__config = configparser.RawConfigParser(strict=False)
+            with open(DashboardConfig.ConfigurationFilePath, "r+") as f:
+                self.__config.read_file(f)
         self.hiddenAttribute = ["totp_key", "auth_req"]
         self.__default = {
             "Account": {
@@ -174,13 +178,9 @@ class DashboardConfig:
         if section == "Peers" and key == "peer_global_dns" and len(value) > 0:
             return ValidateDNSAddress(value)
         if section == "Peers" and key == "peer_endpoint_allowed_ip":
-            value = value.split(",")
-            for i in value:
-                i = i.strip()
-                try:
-                    ipaddress.ip_network(i, strict=False)
-                except Exception as e:
-                    return False, str(e)
+            status, msg = ValidateEndpointAllowedIPs(value)
+            if not status:
+                return False, msg
         if section == "Server" and key == "wg_conf_path":
             if not os.path.exists(value):
                 return False, f"{value} is not a valid path"
@@ -200,87 +200,91 @@ class DashboardConfig:
         return bcrypt.checkpw(plainTextPassword.encode("utf-8"), hashedPassword)
 
     def SetConfig(self, section: str, key: str, value: str | bool | list[str] | dict[str, str], init: bool = False) -> tuple[bool, str] | tuple[bool, None]:
-        if key in self.hiddenAttribute and not init:
-            return False, None
+        with self._lock:
+            if key in self.hiddenAttribute and not init:
+                return False, None
 
-        if not init:
-            valid, msg = self.__configValidation(section, key, value)
-            if not valid:
-                return False, msg
-
-        if section == "Account" and key == "password":
             if not init:
-                value = self.generatePassword(value["newPassword"]).decode("utf-8")
-            else:
-                value = self.generatePassword(value).decode("utf-8")
+                valid, msg = self.__configValidation(section, key, value)
+                if not valid:
+                    return False, msg
 
-        if section == "Email" and key == "email_template":
-            value = value.encode('unicode_escape').decode('utf-8')
-
-        if section == "Server" and key == "wg_conf_path":
-            if not os.path.exists(value):
-                return False, "Path does not exist"
-
-        if section not in self.__config.sections():
-            if init:
-                self.__config.add_section(section)
-            else:
-                return False, "Section does not exist"
-
-        if ((key not in self.__config[section].keys() and init) or
-                (key in self.__config[section].keys())):
-            if type(value) is bool:
-                if value:
-                    self.__config[section][key] = "true"
+            if section == "Account" and key == "password":
+                if not init:
+                    value = self.generatePassword(value["newPassword"]).decode("utf-8")
                 else:
-                    self.__config[section][key] = "false"
-            elif type(value) in [int, float]:
-                self.__config[section][key] = str(value)
-            elif type(value) is list:
-                self.__config[section][key] = "||".join(value).strip("||")
+                    value = self.generatePassword(value).decode("utf-8")
+
+            if section == "Email" and key == "email_template":
+                value = value.encode('unicode_escape').decode('utf-8')
+
+            if section == "Server" and key == "wg_conf_path":
+                if not os.path.exists(value):
+                    return False, "Path does not exist"
+
+            if section not in self.__config.sections():
+                if init:
+                    self.__config.add_section(section)
+                else:
+                    return False, "Section does not exist"
+
+            if ((key not in self.__config[section].keys() and init) or
+                    (key in self.__config[section].keys())):
+                if type(value) is bool:
+                    if value:
+                        self.__config[section][key] = "true"
+                    else:
+                        self.__config[section][key] = "false"
+                elif type(value) in [int, float]:
+                    self.__config[section][key] = str(value)
+                elif type(value) is list:
+                    self.__config[section][key] = "||".join(value).strip("||")
+                else:
+                    self.__config[section][key] = fr"{value}"
+                return self.SaveConfig(), ""
             else:
-                self.__config[section][key] = fr"{value}"
-            return self.SaveConfig(), ""
-        else:
-            return False, f"{key} does not exist under {section}"
+                return False, f"{key} does not exist under {section}"
     def SaveConfig(self) -> bool:
-        try:
-            with open(DashboardConfig.ConfigurationFilePath, "w+", encoding='utf-8') as configFile:
-                self.__config.write(configFile)
-            return True
-        except Exception as e:
-            if hasattr(current_app, 'logger'):
-                 current_app.logger.error(f"Failed to save configuration to {DashboardConfig.ConfigurationFilePath}: {e}")
-            return False
+        with self._lock:
+            try:
+                with open(DashboardConfig.ConfigurationFilePath, "w+", encoding='utf-8') as configFile:
+                    self.__config.write(configFile)
+                return True
+            except Exception as e:
+                if hasattr(current_app, 'logger'):
+                     current_app.logger.error(f"Failed to save configuration to {DashboardConfig.ConfigurationFilePath}: {e}")
+                return False
 
     def GetConfig(self, section, key) ->tuple[bool, bool] | tuple[bool, str] | tuple[bool, list[str]] | tuple[bool, None]:
-        if section not in self.__config:
-            return False, None
+        with self._lock:
+            if section not in self.__config:
+                return False, None
 
-        if key not in self.__config[section]:
-            return False, None
+            if key not in self.__config[section]:
+                return False, None
 
-        if section == "Email" and key == "email_template":
-            return True, self.__config[section][key].encode('utf-8').decode('unicode_escape')
+            if section == "Email" and key == "email_template":
+                return True, self.__config[section][key].encode('utf-8').decode('unicode_escape')
 
-        if section == "WireGuardConfiguration" and key == "autostart":
-            return True, list(filter(lambda x: len(x) > 0, self.__config[section][key].split("||")))
+            if section == "WireGuardConfiguration" and key == "autostart":
+                return True, list(filter(lambda x: len(x) > 0, self.__config[section][key].split("||")))
 
-        if self.__config[section][key] in ["1", "yes", "true", "on"]:
-            return True, True
+            if self.__config[section][key] in ["1", "yes", "true", "on"]:
+                return True, True
 
-        if self.__config[section][key] in ["0", "no", "false", "off"]:
-            return True, False
+            if self.__config[section][key] in ["0", "no", "false", "off"]:
+                return True, False
 
 
-        return True, self.__config[section][key]
+            return True, self.__config[section][key]
 
     def toJson(self) -> dict[str, dict[Any, Any]]:
-        the_dict = {}
+        with self._lock:
+            the_dict = {}
 
-        for section in self.__config.sections():
-            the_dict[section] = {}
-            for key, val in self.__config.items(section):
-                if key not in self.hiddenAttribute:
-                    the_dict[section][key] = self.GetConfig(section, key)[1]
-        return the_dict
+            for section in self.__config.sections():
+                the_dict[section] = {}
+                for key, val in self.__config.items(section):
+                    if key not in self.hiddenAttribute:
+                        the_dict[section][key] = self.GetConfig(section, key)[1]
+            return the_dict

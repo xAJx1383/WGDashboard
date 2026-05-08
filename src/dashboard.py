@@ -1,6 +1,6 @@
 import logging
 import random, shutil, sqlite3, configparser, hashlib, ipaddress, json, os, secrets, subprocess
-import time, re, uuid, bcrypt, psutil, pyotp, threading
+import time, re, uuid, bcrypt, psutil, pyotp, threading, atexit
 import traceback
 from uuid import uuid4
 from zipfile import ZipFile
@@ -80,8 +80,8 @@ def peerInformationBackgroundThread():
     app.logger.info("Background Thread #1 Started")
     app.logger.info("Background Thread #1 PID:" + str(threading.get_native_id()))
     delay = 6
-    time.sleep(10)
-    while True:
+    _app_stop_event.wait(10)
+    while not _app_stop_event.is_set():
         with app.app_context():
             try:
                 with _wireguard_config_lock:
@@ -100,25 +100,25 @@ def peerInformationBackgroundThread():
                                     c.logPeersHistoryEndpoint()
                             c.getRestrictedPeersList()
             except Exception as e:
-                app.logger.error(f"[WGDashboard] Background Thread #1 Error", e)
+                app.logger.exception(f"[WGDashboard] Background Thread #1 Error")
 
         if delay == 6:
             delay = 1
         else:
             delay += 1
-        time.sleep(10)
+        _app_stop_event.wait(10)
 
 def peerJobScheduleBackgroundThread():
     with app.app_context():
         app.logger.info(f"Background Thread #2 Started")
         app.logger.info(f"Background Thread #2 PID:" + str(threading.get_native_id()))
-        time.sleep(10)
-        while True:
+        _app_stop_event.wait(10)
+        while not _app_stop_event.is_set():
             try:
                 AllPeerJobs.runJob()
-                time.sleep(180)
+                _app_stop_event.wait(180)
             except Exception as e:
-                app.logger.error("Background Thread #2 Error", e)
+                app.logger.exception("Background Thread #2 Error")
 
 def gunicornConfig():
     _, app_ip = DashboardConfig.GetConfig("Server", "app_ip")
@@ -134,7 +134,12 @@ def ProtocolsEnabled() -> list[str]:
         protocols.append("wg")
     return protocols
 
-def InitWireguardConfigurationsList(startup: bool = False):
+def InitWireguardConfigurationsList(startup: bool = False, force: bool = False):
+    global _last_reload_time
+    if not startup and not force:
+        if time.time() - _last_reload_time < _reload_interval:
+            return
+    _last_reload_time = time.time()
     if os.path.exists(DashboardConfig.GetConfig("Server", "wg_conf_path")[1]):
         confs = os.listdir(DashboardConfig.GetConfig("Server", "wg_conf_path")[1])
         confs.sort()
@@ -184,6 +189,17 @@ dictConfig({
 
 WireguardConfigurations: dict[str, WireguardConfiguration] = {}
 _wireguard_config_lock = threading.RLock()
+_app_stop_event = threading.Event()
+_last_reload_time = 0
+_reload_interval = 5
+
+def _on_app_shutdown():
+    _app_stop_event.set()
+    if 'SystemStatus' in globals():
+        globals()['SystemStatus'].stop()
+
+atexit.register(_on_app_shutdown)
+
 CONFIGURATION_PATH = os.getenv('CONFIGURATION_PATH', '.')
 
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 5206928
@@ -330,7 +346,9 @@ def API_SignOut():
 @app.get(f'{APP_PREFIX}/api/getWireguardConfigurations')
 def API_getWireguardConfigurations():
     InitWireguardConfigurationsList()
-    return ResponseObject(data=[wc for wc in WireguardConfigurations.values()])
+    with _wireguard_config_lock:
+        data = [wc for wc in WireguardConfigurations.values()]
+    return ResponseObject(data=data)
 
 @app.get(f'{APP_PREFIX}/api/newConfigurationTemplates')
 def API_NewConfigurationTemplates():
@@ -381,21 +399,22 @@ def API_addWireguardConfiguration():
         return ResponseObject(False, "Configuration name must be 50 characters or fewer.")
 
     # Check duplicate names, ports, address
-    for i in WireguardConfigurations.values():
-        if i.Name == data['ConfigurationName']:
-            return ResponseObject(False,
-                                  f"Already have a configuration with the name \"{data['ConfigurationName']}\"",
-                                  "ConfigurationName")
+    with _wireguard_config_lock:
+        for i in WireguardConfigurations.values():
+            if i.Name == data['ConfigurationName']:
+                return ResponseObject(False,
+                                      f"Already have a configuration with the name \"{data['ConfigurationName']}\"",
+                                      "ConfigurationName")
 
-        if str(i.ListenPort) == str(data["ListenPort"]):
-            return ResponseObject(False,
-                                  f"Already have a configuration with the port \"{data['ListenPort']}\"",
-                                  "ListenPort")
+            if str(i.ListenPort) == str(data["ListenPort"]):
+                return ResponseObject(False,
+                                      f"Already have a configuration with the port \"{data['ListenPort']}\"",
+                                      "ListenPort")
 
-        if i.Address == data["Address"]:
-            return ResponseObject(False,
-                                  f"Already have a configuration with the address \"{data['Address']}\"",
-                                  "Address")
+            if i.Address == data["Address"]:
+                return ResponseObject(False,
+                                      f"Already have a configuration with the address \"{data['Address']}\"",
+                                      "Address")
 
     if "Backup" in data.keys():
         path = {
@@ -562,11 +581,12 @@ def API_getAllWireguardConfigurationBackup():
         "ExistingConfigurations": {},
         "NonExistingConfigurations": {}
     }
-    existingConfiguration = WireguardConfigurations.keys()
-    for i in existingConfiguration:
-        b = WireguardConfigurations[i].getBackups(True)
-        if len(b) > 0:
-            data['ExistingConfigurations'][i] = WireguardConfigurations[i].getBackups(True)
+    with _wireguard_config_lock:
+        existingConfiguration = list(WireguardConfigurations.keys())
+        for i in existingConfiguration:
+            b = WireguardConfigurations[i].getBackups(True)
+            if len(b) > 0:
+                data['ExistingConfigurations'][i] = WireguardConfigurations[i].getBackups(True)
             
     for protocol in ProtocolsEnabled():
         directory = os.path.join(DashboardConfig.GetConfig("Server", f"{protocol}_conf_path")[1], 'WGDashboard_Backup')
@@ -584,15 +604,21 @@ def API_getAllWireguardConfigurationBackup():
                             data['NonExistingConfigurations'][name] = []
                         
                         date = s.group(2)
+                        backup_path = os.path.join(DashboardConfig.GetConfig("Server", f"{protocol}_conf_path")[1], 'WGDashboard_Backup', f)
+                        with open(backup_path, 'r') as f_in:
+                            content = f_in.read()
+                        
                         d = {
                             "protocol": protocol,
                             "filename": f,
                             "backupDate": date,
-                            "content": open(os.path.join(DashboardConfig.GetConfig("Server", f"{protocol}_conf_path")[1], 'WGDashboard_Backup', f), 'r').read()
+                            "content": content
                         }
                         if f.replace(".conf", ".sql") in list(os.listdir(directory)):
                             d['database'] = True
-                            d['databaseContent'] = open(os.path.join(DashboardConfig.GetConfig("Server", f"{protocol}_conf_path")[1], 'WGDashboard_Backup', f.replace(".conf", ".sql")), 'r').read()
+                            sql_path = os.path.join(DashboardConfig.GetConfig("Server", f"{protocol}_conf_path")[1], 'WGDashboard_Backup', f.replace(".conf", ".sql"))
+                            with open(sql_path, 'r') as f_in:
+                                d['databaseContent'] = f_in.read()
                         data['NonExistingConfigurations'][name].append(d)
     return ResponseObject(data=data)
 
@@ -663,9 +689,9 @@ def API_updateDashboardConfigurationItem():
         return ResponseObject(False, msg)
     if data['section'] == "Server":
         if data['key'] == 'wg_conf_path':
-            WireguardConfigurations.clear()
-            WireguardConfigurations.clear()
-            InitWireguardConfigurationsList()
+            with _wireguard_config_lock:
+                WireguardConfigurations.clear()
+            InitWireguardConfigurationsList(force=True)
     return ResponseObject(True, data=DashboardConfig.GetConfig(data["section"], data["key"])[1])
 
 @app.get(f'{APP_PREFIX}/api/getDashboardAPIKeys')
@@ -969,9 +995,7 @@ def API_addPeers(configName):
                     for i in allowed_ips:
                         found = False
                         for subnet in availableIps.keys():
-                            network = ipaddress.ip_network(subnet, False)
-                            ap = ipaddress.ip_network(i)
-                            if network.version == ap.version and ap.subnet_of(network):
+                            if IsIPInSubnet(i, subnet):
                                 found = True
                         
                         if not found:
@@ -995,7 +1019,7 @@ def API_addPeers(configName):
         except Exception as e:
             app.logger.error("Add peers failed", e)
             return ResponseObject(False,
-                                  f"Add peers failed. Reason: {message}")
+                                  f"Add peers failed. Reason: {str(e)}")
 
     return ResponseObject(False, "Configuration does not exist")
 
@@ -1042,12 +1066,32 @@ def API_getNumberOfAvailableIPs(configName):
 @app.get(f'{APP_PREFIX}/api/getWireguardConfigurationInfo')
 def API_getConfigurationInfo():
     configurationName = request.args.get("configurationName")
+    limit = request.args.get("limit", type=int)
+    offset = request.args.get("offset", type=int, default=0)
+    
     if not configurationName or configurationName not in WireguardConfigurations.keys():
         return ResponseObject(False, "Please provide configuration name")
+    
+    peers = WireguardConfigurations[configurationName].getPeersList()
+    restricted_peers = WireguardConfigurations[configurationName].getRestrictedPeersList()
+    
+    if limit is not None:
+        # Apply pagination if limit is provided
+        paged_peers = peers[offset:offset+limit]
+        # Only return restricted peers if we haven't exhausted the limit yet
+        # (This is a simplified approach to keep API compatibility)
+        paged_restricted = restricted_peers[max(0, offset-len(peers)) : max(0, offset+limit-len(peers))]
+    else:
+        # Backward compatibility: return full lists if no limit provided
+        paged_peers = peers
+        paged_restricted = restricted_peers
+
     return ResponseObject(data={
         "configurationInfo": WireguardConfigurations[configurationName],
-        "configurationPeers": WireguardConfigurations[configurationName].getPeersList(),
-        "configurationRestrictedPeers": WireguardConfigurations[configurationName].getRestrictedPeersList()
+        "configurationPeers": paged_peers,
+        "configurationRestrictedPeers": paged_restricted,
+        "totalPeers": len(peers),
+        "totalRestrictedPeers": len(restricted_peers)
     })
 
 @app.get(f'{APP_PREFIX}/api/getPeerHistoricalEndpoints')
@@ -1121,7 +1165,7 @@ def API_GetPeerTraffics():
                 if startDate > endDate:
                     return ResponseObject(False, "startDate must be smaller than endDate")
     except Exception as e:
-        return ResponseObject(False, "Dates are invalid" + e)
+        return ResponseObject(False, f"Dates are invalid: {str(e)}")
     if not configurationName or not id:
         return ResponseObject(False, "Please provide configurationName and id")
     fp, p = WireguardConfigurations.get(configurationName).searchPeer(id)
@@ -1314,7 +1358,7 @@ def API_ping_execute():
                 return ResponseObject(data=data)
             return ResponseObject(False, "Please specify an IP Address (v4/v6)")
         except Exception as exp:
-            return ResponseObject(False, exp)
+            return ResponseObject(False, str(exp))
     return ResponseObject(False, "Please provide ipAddress and count")
 
 
@@ -1338,7 +1382,7 @@ def API_traceroute_execute():
                                 "max_rtt": "*"
                             }
                         )
-                        skip = True
+                        skipped = True
                     if skipped: continue
                 result.append(
                     {
@@ -1358,7 +1402,7 @@ def API_traceroute_execute():
                 return ResponseObject(data=result, message="Failed to request IP address geolocation")
             return ResponseObject(data=result)
         except Exception as exp:
-            return ResponseObject(False, exp)
+            return ResponseObject(False, str(exp))
     else:
         return ResponseObject(False, "Please provide ipAddress")
 
@@ -1366,7 +1410,8 @@ def API_traceroute_execute():
 def API_getDashboardUpdate():
     import urllib.request as req
     try:
-        r = req.urlopen("https://api.github.com/repos/WGDashboard/WGDashboard/releases/latest", timeout=5).read()
+        with req.urlopen("https://api.github.com/repos/WGDashboard/WGDashboard/releases/latest", timeout=5) as response:
+            r = response.read()
         data = dict(json.loads(r))
         tagName = data.get('tag_name')
         htmlUrl = data.get('html_url')
@@ -1492,10 +1537,13 @@ def API_Email_Send():
             if configuration is not None:
                 fp, p = configuration.searchPeer(data.get('Peer'))
                 if fp:
-                    template = jinja2.sandbox.SandboxedEnvironment().from_string(body)
-                    download = p.downloadPeer()
-                    body = template.render(peer=p.toJson(), configurationFile=download)
-                    subject = jinja2.sandbox.SandboxedEnvironment().from_string(data.get('Subject', '')).render(peer=p.toJson(), configurationFile=download)
+                    try:
+                        template = jinja2.sandbox.SandboxedEnvironment().from_string(body)
+                        download = p.downloadPeer()
+                        body = template.render(peer=p.toJson(), configurationFile=download)
+                        subject = jinja2.sandbox.SandboxedEnvironment().from_string(data.get('Subject', '')).render(peer=p.toJson(), configurationFile=download)
+                    except Exception as e:
+                         return ResponseObject(False, f"Failed to render email template: {str(e)}")
                     if data.get('IncludeAttachment', False):
                         u = str(uuid4())
                         attachmentName = f'{u}.conf'

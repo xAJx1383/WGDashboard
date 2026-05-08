@@ -23,6 +23,9 @@ from .DashboardWebHooks import DashboardWebHooks
 
 
 class WireguardConfiguration:
+    INTERFACE_KEYS = ["PrivateKey", "Address", "ListenPort", "DNS", "MTU", "Table", "PreUp", "PostUp", "PreDown", "PostDown", "SaveConfig"]
+    AWG_INTERFACE_KEYS = ["Jc", "Jmin", "Jmax", "S1", "S2", "H1", "H2", "H3", "H4"]
+
     class InvalidConfigurationFileException(Exception):
         def __init__(self, m):
             self.message = m
@@ -153,7 +156,8 @@ class WireguardConfiguration:
         self.getRestrictedPeersList()
 
     def getRawConfigurationFile(self):
-        return open(self.configPath, 'r').read()
+        with open(self.configPath, 'r') as f:
+            return f.read()
 
     def updateRawConfigurationFile(self, newRawConfiguration):
         backupStatus, backup = self.backupConfigurationFile()
@@ -181,13 +185,14 @@ class WireguardConfiguration:
                 start = original.index("[Interface]")
 
                 # Clean
+                allowed = self.INTERFACE_KEYS + (self.AWG_INTERFACE_KEYS if self.Protocol == 'awg' else [])
                 for i in range(start, len(original)):
                     if original[i] == "[Peer]":
                         break
                     split = re.split(r'\s*=\s*', original[i], 1)
                     if len(split) == 2:
                         key = split[0]
-                        if key in dir(self):
+                        if key in allowed:
                             if isinstance(getattr(self, key), bool):
                                 setattr(self, key, False)
                             else:
@@ -201,11 +206,11 @@ class WireguardConfiguration:
                     if len(split) == 2:
                         key = split[0]
                         value = split[1]
-                        if key in dir(self):
+                        if key in allowed:
                             if isinstance(getattr(self, key), bool):
                                 setattr(self, key, StringToBoolean(value))
                             else:
-                                if len(getattr(self, key)) > 0:
+                                if len(str(getattr(self, key))) > 0:
                                     setattr(self, key, f"{getattr(self, key)}, {value}")
                                 else:
                                     setattr(self, key, value)
@@ -810,26 +815,33 @@ class WireguardConfiguration:
                         total_sent = cur_i['total_sent']
                         # print(cur_i is None)
                         total_receive = cur_i['total_receive']
-                        cur_total_sent = float(data_usage[i][2]) / (1024 ** 3)
-                        cur_total_receive = float(data_usage[i][1]) / (1024 ** 3)
-                        cumulative_receive = cur_i['cumu_receive'] + total_receive
-                        cumulative_sent = cur_i['cumu_sent'] + total_sent
-                        if total_sent <= cur_total_sent and total_receive <= cur_total_receive:
+                        try:
+                            cur_total_sent = float(data_usage[i][2]) / (1024 ** 3)
+                            cur_total_receive = float(data_usage[i][1]) / (1024 ** 3)
+                        except (ValueError, IndexError):
+                            continue
+                        updates = {}
+                        if cur_total_sent < total_sent:
+                            updates["cumu_sent"] = cur_i['cumu_sent'] + total_sent
                             total_sent = cur_total_sent
+                        else:
+                            total_sent = cur_total_sent
+                        
+                        if cur_total_receive < total_receive:
+                            updates["cumu_receive"] = cur_i['cumu_receive'] + total_receive
                             total_receive = cur_total_receive
                         else:
+                            total_receive = cur_total_receive
+                        
+                        if updates:
+                            updates["cumu_data"] = (updates.get("cumu_sent", cur_i['cumu_sent']) + 
+                                                   updates.get("cumu_receive", cur_i['cumu_receive']))
                             conn.execute(
-                                self.peersTable.update().values({
-                                    "cumu_receive": cumulative_receive,
-                                    "cumu_sent": cumulative_sent,
-                                    "cumu_data": cumulative_sent + cumulative_receive
-                                }).where(
+                                self.peersTable.update().values(updates).where(
                                     self.peersTable.c.id == data_usage[i][0]
                                 )
                             )
 
-                            total_sent = 0
-                            total_receive = 0
                         status, p = self.searchPeer(data_usage[i][0])
                         if status:
                             if p.total_receive != total_receive or p.total_sent != total_sent:
@@ -901,26 +913,34 @@ class WireguardConfiguration:
                     if cur_i:
                         total_sent = cur_i['total_sent']
                         total_receive = cur_i['total_receive']
-                        cur_total_sent = float(transfer_tx) / (1024 ** 3)
-                        cur_total_receive = float(transfer_rx) / (1024 ** 3)
+                        try:
+                            cur_total_sent = float(transfer_tx) / (1024 ** 3)
+                            cur_total_receive = float(transfer_rx) / (1024 ** 3)
+                        except (ValueError, TypeError):
+                            continue
                         
-                        cumulative_receive = cur_i['cumu_receive'] + total_receive
-                        cumulative_sent = cur_i['cumu_sent'] + total_sent
-                        
-                        if total_sent <= cur_total_sent and total_receive <= cur_total_receive:
+                        updates = {}
+                        if cur_total_sent < total_sent:
+                            updates["cumu_sent"] = cur_i['cumu_sent'] + total_sent
                             total_sent = cur_total_sent
+                        else:
+                            total_sent = cur_total_sent
+
+                        if cur_total_receive < total_receive:
+                            updates["cumu_receive"] = cur_i['cumu_receive'] + total_receive
                             total_receive = cur_total_receive
                         else:
+                            total_receive = cur_total_receive
+
+                        if updates:
+                            updates["cumu_data"] = (updates.get("cumu_sent", cur_i['cumu_sent']) + 
+                                                   updates.get("cumu_receive", cur_i['cumu_receive']))
                             conn.execute(
-                                self.peersTable.update().values({
-                                    "cumu_receive": cumulative_receive,
-                                    "cumu_sent": cumulative_sent,
-                                    "cumu_data": cumulative_sent + cumulative_receive
-                                }).where(self.peersTable.c.id == peer_id)
+                                self.peersTable.update().values(updates).where(
+                                    self.peersTable.c.id == peer_id
+                                )
                             )
-                            total_sent = 0
-                            total_receive = 0
-                        
+
                         conn.execute(
                             self.peersTable.update().values({
                                 "latest_handshake": handshake_str,
@@ -929,7 +949,9 @@ class WireguardConfiguration:
                                 "total_receive": total_receive,
                                 "total_sent": total_sent,
                                 "total_data": total_receive + total_sent
-                            }).where(self.peersTable.c.id == peer_id)
+                            }).where(
+                                self.peersTable.c.id == peer_id
+                            )
                         )
         except Exception as e:
             current_app.logger.error(f"Failed to update peers data for {self.Name}: {e}")
@@ -998,10 +1020,26 @@ class WireguardConfiguration:
             for l in self.__dumpDatabase():
                 f.write(l + "\n")
 
+        self.rotateBackups()
+
         return True, {
             "filename": f'{self.Name}_{time}.conf',
             "backupDate": datetime.now().strftime("%Y%m%d%H%M%S")
         }
+
+    def rotateBackups(self, limit: int = 100):
+        try:
+            backups = self.getBackups()
+            if len(backups) > limit:
+                for b in backups[limit:]:
+                    self.deleteBackup(b['filename'])
+                    # Also delete the associated SQL file if it exists
+                    sql_file = b['filename'].replace(".conf", ".sql")
+                    sql_path = os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', sql_file)
+                    if os.path.exists(sql_path):
+                        os.remove(sql_path)
+        except Exception as e:
+            current_app.logger.error(f"Backup rotation failed for {self.Name}: {str(e)}")
 
     def getBackups(self, databaseContent: bool = False) -> list[dict[str, str]]:
         backups = []
@@ -1015,15 +1053,20 @@ class WireguardConfiguration:
             if RegexMatch(f"^({self.Name})_(.*)\\.(conf)$", f):
                 s = re.search(f"^({self.Name})_(.*)\\.(conf)$", f)
                 date = s.group(2)
+                backup_path = os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f)
+                with open(backup_path, 'r') as f_in:
+                    content = f_in.read()
                 d = {
                     "filename": f,
                     "backupDate": date,
-                    "content": open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f), 'r').read()
+                    "content": content
                 }
                 if f.replace(".conf", ".sql") in list(os.listdir(directory)):
                     d['database'] = True
                     if databaseContent:
-                        d['databaseContent'] = open(os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f.replace(".conf", ".sql")), 'r').read()
+                        sql_path = os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', f.replace(".conf", ".sql"))
+                        with open(sql_path, 'r') as f_in:
+                            d['databaseContent'] = f_in.read()
                 backups.append(d)
 
         return backups
@@ -1038,7 +1081,8 @@ class WireguardConfiguration:
         targetSQL = os.path.join(self.__getProtocolPath(), 'WGDashboard_Backup', backupFileName.replace(".conf", ".sql"))
         if not os.path.exists(target):
             return False
-        targetContent = open(target, 'r').read()
+        with open(target, 'r') as f_in:
+            targetContent = f_in.read()
         try:
             with open(self.configPath, 'w') as f:
                 f.write(targetContent)
@@ -1080,42 +1124,61 @@ class WireguardConfiguration:
     def updateConfigurationSettings(self, newData: dict) -> tuple[bool, str]:
         if self.Status:
             self.toggleConfiguration()
-        original = []
-        dataChanged = False
+
+        allowEdit = ["Address", "PreUp", "PostUp", "PreDown", "PostDown", "ListenPort", "Table"]
+        if self.Protocol == 'awg':
+            allowEdit += ["Jc", "Jmin", "Jmax", "S1", "S2", "H1", "H2", "H3", "H4"]
+
+        new_lines = []
+        found_keys = set()
+        in_interface = False
+
         with open(self.configPath, 'r') as f:
-            original = [l.rstrip("\n") for l in f.readlines()]
-            allowEdit = ["Address", "PreUp", "PostUp", "PreDown", "PostDown", "ListenPort", "Table"]
-            if self.Protocol == 'awg':
-                allowEdit += ["Jc", "Jmin", "Jmax", "S1", "S2", "H1", "H2", "H3", "H4"]
-            start = original.index("[Interface]")
-            try:
-                end = original.index("[Peer]")
-            except ValueError as e:
-                end = len(original)
-            new = ["[Interface]"]
-            peerFound = False
-            for line in range(start, end):
-                split = re.split(r'\s*=\s*', original[line], 1)
-                if len(split) == 2:
-                    if split[0] not in allowEdit:
-                        new.append(original[line])
+            original = f.readlines()
+
+        for line in original:
+            stripped = line.strip()
+            # Ignore comments for section matching
+            if not stripped.startswith("#") and stripped.startswith("[") and stripped.endswith("]"):
+                if stripped == "[Interface]":
+                    in_interface = True
+                    new_lines.append(line)
+                    continue
+                elif in_interface:
+                    # Leaving [Interface] section, add missing keys
+                    for key in allowEdit:
+                        if key not in found_keys:
+                            new_lines.append(f"{key} = {str(newData[key]).strip()}\n")
+                            found_keys.add(key)
+                    in_interface = False
+
+            if in_interface and not stripped.startswith("#"):
+                match = re.match(r"^\s*([a-zA-Z0-9_-]+)\s*=\s*(.*)$", stripped)
+                if match:
+                    key = match.group(1)
+                    if key in allowEdit:
+                        new_lines.append(f"{key} = {str(newData[key]).strip()}\n")
+                        found_keys.add(key)
+                        continue
+            new_lines.append(line)
+
+        if in_interface:
             for key in allowEdit:
-                new.insert(1, f"{key} = {str(newData[key]).strip()}")
-            new.append("")
-            for line in range(end, len(original)):
-                new.append(original[line])
-            self.backupConfigurationFile()
-            with open(self.configPath, 'w') as f:
-                f.write("\n".join(new))
+                if key not in found_keys:
+                    new_lines.append(f"{key} = {str(newData[key]).strip()}\n")
+                    found_keys.add(key)
+
+        self.backupConfigurationFile()
+        with open(self.configPath, 'w') as f:
+            f.writelines(new_lines)
 
         status, msg = self.toggleConfiguration()
         if not status:
             return False, msg
         for i in allowEdit:
             setattr(self, i, str(newData[i]))
-                
-        return True, ""
 
+        return True, ""
     def deleteConfiguration(self):
         if self.getStatus():
             self.toggleConfiguration()
@@ -1194,8 +1257,15 @@ class WireguardConfiguration:
         return True, availableAddress
 
     def getAvailableIP(self, threshold = 255):
-        if len(self.Address) < 0:
+        if len(self.Address) == 0:
             return False, None
+        
+        # Hard cap the threshold to prevent OOM/timeouts on large networks
+        if threshold == -1:
+            threshold = 1024
+        else:
+            threshold = min(threshold, 1024)
+
         existedAddress = set()
         availableAddress = {}
         for p in self.Peers + self.getRestrictedPeersList():
@@ -1204,10 +1274,12 @@ class WireguardConfiguration:
                 ppip = pip.strip().split('/')
                 if len(ppip) == 2:
                     try:
+                        # Normalize to compressed string for fast set lookup
                         check = ipaddress.ip_network(ppip[0])
                         existedAddress.add(check.compressed)
                     except Exception as e:
                         current_app.logger.error(f"{self.Name} peer {p.id} have invalid ip", e)
+        
         configurationAddresses = self.Address.split(',')
         for ca in configurationAddresses:
             ca = ca.strip()
@@ -1215,15 +1287,19 @@ class WireguardConfiguration:
             try:
                 if len(caSplit) == 2:
                     network = ipaddress.ip_network(ca, False)
+                    # Add the network address itself to existedAddress
                     existedAddress.add(ipaddress.ip_network(caSplit[0]).compressed)
-                    if threshold == -1:
-                        availableAddress[ca] = filter(lambda ip : ip not in existedAddress,
-                                                      map(lambda iph : ipaddress.ip_network(iph).compressed, network.hosts()))
-                    else:
-                        availableAddress[ca] = list(islice(filter(lambda ip : ip not in existedAddress,
-                                                                  map(lambda iph : ipaddress.ip_network(iph).compressed, network.hosts())), threshold))
+                    
+                    # Efficiently find available IPs by iterating and checking set membership
+                    # hosts() is a generator, so we only consume until we find 'threshold' items
+                    available = islice(
+                        filter(lambda ip_str: ip_str not in existedAddress, 
+                               map(lambda ip: str(ip), network.hosts())),
+                        threshold
+                    )
+                    availableAddress[ca] = list(available)
             except Exception as e:
-                current_app.logger.error(f"Failed to parse IP address {ca} from {self.Name}", e)
+                current_app.logger.error(f"Failed to parse IP address {ca} from {self.Name}", exc_info=e)
         return True, availableAddress
 
     def getRealtimeTrafficUsage(self):

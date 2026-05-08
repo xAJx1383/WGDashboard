@@ -117,9 +117,8 @@ class DashboardOIDC:
     def ReadFile(self):
         decoder = json.JSONDecoder()
         try:
-            providers = decoder.decode(
-                open(DashboardOIDC.ConfigurationFilePath, 'r').read()
-            )
+            with open(DashboardOIDC.ConfigurationFilePath, 'r') as f_in:
+                providers = decoder.decode(f_in.read())
             providers = providers[self.mode]
             for k in providers.keys():
                 if all([providers[k]['client_id'], providers[k]['client_secret'], providers[k]['issuer']]):

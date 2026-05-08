@@ -68,6 +68,14 @@ def ValidateEndpointAllowedIPs(IPs) -> tuple[bool, str] | tuple[bool, None]:
             return False, str(e)
     return True, None
 
+def IsIPInSubnet(ip: str, subnet: str) -> bool:
+    try:
+        net = ipaddress.ip_network(subnet, strict=False)
+        addr = ipaddress.ip_network(ip)
+        return addr.version == net.version and addr.subnet_of(net)
+    except ValueError:
+        return False
+
 def GenerateWireguardPublicKey(privateKey: str) -> tuple[bool, str] | tuple[bool, None]:
     try:
         publicKey = subprocess.check_output(["wg", "pubkey"], input=privateKey.encode(),

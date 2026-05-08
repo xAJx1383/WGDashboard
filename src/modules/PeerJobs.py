@@ -189,7 +189,26 @@ class PeerJobs:
                               f"Somehow can't find this peer {job.Peer} from {job.Configuration} failed {job.Action}ed."
                               )
         for j in needToDelete:
-            self.deleteJob(j)
+            self.JobLogger.log(j.JobID, Message=f"Job is removed due to being deleted or finished.")
+        
+        if needToDelete:
+            job_ids = [j.JobID for j in needToDelete]
+            with self.engine.begin() as conn:
+                conn.execute(
+                    self.peerJobTable.update().values(
+                        {
+                            "ExpireDate": datetime.now()
+                        }
+                    ).where(self.peerJobTable.columns.JobID.in_(job_ids))
+                )
+            self.__getJobs()
+            configs_to_refresh = set((j.Configuration, j.Peer) for j in needToDelete)
+            for conf_name, peer_id in configs_to_refresh:
+                conf = self.WireguardConfigurations.get(conf_name)
+                if conf:
+                    found, peer = conf.searchPeer(peer_id)
+                    if found:
+                        peer.getJobs()
             
     def cleanJob(self, init = False):
         failingJobs = self.JobLogger.getFailingJobs()

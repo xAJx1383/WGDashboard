@@ -43,9 +43,29 @@ class Peer:
         self.getShareLink()
 
     def toJson(self):
-        # self.getJobs()
-        # self.getShareLink()
-        return self.__dict__
+        return {
+            "id": self.id,
+            "private_key": self.private_key,
+            "DNS": self.DNS,
+            "endpoint_allowed_ip": self.endpoint_allowed_ip,
+            "name": self.name,
+            "total_receive": self.total_receive,
+            "total_sent": self.total_sent,
+            "total_data": self.total_data,
+            "endpoint": self.endpoint,
+            "status": self.status,
+            "latest_handshake": self.latest_handshake,
+            "allowed_ip": self.allowed_ip,
+            "cumu_receive": self.cumu_receive,
+            "cumu_sent": self.cumu_sent,
+            "cumu_data": self.cumu_data,
+            "mtu": self.mtu,
+            "keepalive": self.keepalive,
+            "remote_endpoint": self.remote_endpoint,
+            "preshared_key": self.preshared_key,
+            "jobs": self.jobs,
+            "ShareLink": self.ShareLink
+        }
 
     def __repr__(self):
         return str(self.toJson())
@@ -223,7 +243,10 @@ class Peer:
                 if val is not None and ((type(val) is str and len(val) > 0) or (type(val) is int and val > 0)):
                     final["file"] += f"{key} = {val}\n"
 
-        final["file"] = jinja2.sandbox.SandboxedEnvironment().from_string(final["file"]).render(configuration=self.configuration)
+        try:
+            final["file"] = jinja2.sandbox.SandboxedEnvironment().from_string(final["file"]).render(configuration=self.configuration)
+        except Exception as e:
+            final["file"] += f"\n\n# ERROR: Failed to render Jinja template: {str(e)}"
 
 
         if self.configuration.Protocol == "awg":

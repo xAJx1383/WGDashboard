@@ -44,33 +44,31 @@ class EmailSender:
     def send(self, receiver, subject, body, includeAttachment = False, attachmentName = "") -> tuple[bool, str] | tuple[bool, None]:
         if self.ready():
             try:
-                self.smtp = smtplib.SMTP(self.Server(), port=int(self.Port()))
-                self.smtp.ehlo()
-                if self.Encryption() == "STARTTLS":
-                    self.smtp.starttls()
-                if self.AuthenticationRequired():
-                    self.smtp.login(self.Username(), self.Password())
-                message = MIMEMultipart()
-                message['Subject'] = subject
-                message['From'] = self.SendFrom()
-                message["To"] = receiver
-                message.attach(MIMEText(body, "plain"))
+                with smtplib.SMTP(self.Server(), port=int(self.Port()), timeout=10) as smtp:
+                    smtp.ehlo()
+                    if self.Encryption() == "STARTTLS":
+                        smtp.starttls()
+                    if self.AuthenticationRequired():
+                        smtp.login(self.Username(), self.Password())
+                    message = MIMEMultipart()
+                    message['Subject'] = subject
+                    message['From'] = self.SendFrom()
+                    message["To"] = receiver
+                    message.attach(MIMEText(body, "plain"))
 
-                if includeAttachment and len(attachmentName) > 0:
-                    attachmentPath = os.path.join('./attachments', attachmentName)
-                    if os.path.exists(attachmentPath):
-                        attachment = MIMEBase("application", "octet-stream")
-                        with open(os.path.join('./attachments', attachmentName), 'rb') as f:
-                            attachment.set_payload(f.read())
-                        encoders.encode_base64(attachment)
-                        attachment.add_header("Content-Disposition", f"attachment; filename= {attachmentName}",)
-                        message.attach(attachment)
-                    else:
-                        self.smtp.close()
-                        return False, "Attachment does not exist"
-                self.smtp.sendmail(self.SendFrom(), receiver, message.as_string())
-                self.smtp.close()
+                    if includeAttachment and len(attachmentName) > 0:
+                        attachmentPath = os.path.join('./attachments', attachmentName)
+                        if os.path.exists(attachmentPath):
+                            attachment = MIMEBase("application", "octet-stream")
+                            with open(os.path.join('./attachments', attachmentName), 'rb') as f:
+                                attachment.set_payload(f.read())
+                            encoders.encode_base64(attachment)
+                            attachment.add_header("Content-Disposition", f"attachment; filename= {attachmentName}",)
+                            message.attach(attachment)
+                        else:
+                            return False, "Attachment does not exist"
+                    smtp.sendmail(self.SendFrom(), receiver, message.as_string())
                 return True, None
             except Exception as e:
-                return False, f"Send failed | Reason: {e}"
+                return False, f"Send failed | Reason: {str(e)}"
         return False, "SMTP not configured"

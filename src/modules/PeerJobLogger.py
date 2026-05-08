@@ -42,7 +42,27 @@ class PeerJobLogger:
         except Exception as e:
             current_app.logger.error(f"Peer Job Log Error", e)
             return False
+        self.cleanupLogs()
         return True
+
+    def cleanupLogs(self, days: int = 30):
+        try:
+            with self.engine.begin() as conn:
+                # Delete logs older than 'days'
+                if conn.dialect.name == 'sqlite':
+                    conn.execute(
+                        self.jobLogTable.delete().where(
+                            self.jobLogTable.c.LogDate < db.text(f"datetime('now', '-{days} days')")
+                        )
+                    )
+                else:
+                    conn.execute(
+                        self.jobLogTable.delete().where(
+                            self.jobLogTable.c.LogDate < (db.func.now() - db.text(f"INTERVAL '{days} days'"))
+                        )
+                    )
+        except Exception as e:
+            current_app.logger.error(f"Failed to cleanup job logs: {str(e)}")
 
     def getLogs(self, configName = None) -> list[Log]:
         logs: list[Log] = []

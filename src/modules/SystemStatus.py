@@ -81,6 +81,10 @@ class SystemStatus:
 
             self._stop_event.wait(5)
 
+    def stop(self):
+        """Signals the background monitoring thread to stop."""
+        self._stop_event.set()
+
     def toJson(self):
         """Returns cached status instantly."""
         if not self._cached_status:

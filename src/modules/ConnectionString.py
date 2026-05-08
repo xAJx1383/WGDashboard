@@ -5,9 +5,13 @@ from sqlalchemy import event
 from sqlalchemy_utils import database_exists, create_database
 from flask import current_app
 
-def ConnectionString(database) -> str:    
+_engine_cache = {}
+
+def ConnectionString(database) -> str:
     parser = configparser.ConfigParser(strict=False)
-    parser.read_file(open('wg-dashboard.ini', "r+"))
+    # Use context manager for reading config
+    with open('wg-dashboard.ini', "r") as f:
+        parser.read_file(f)
     sqlitePath = os.path.join("db")
     if not os.path.isdir(sqlitePath):
         os.mkdir(sqlitePath)
@@ -21,12 +25,17 @@ def ConnectionString(database) -> str:
         if not database_exists(cn):
             create_database(cn)
     except Exception as e:
-        current_app.logger.error("Database error. Terminating...", e)
+        if hasattr(current_app, 'logger'):
+            current_app.logger.error("Database error. Terminating...", exc_info=e)
         exit(1)
         
     return cn
 
 def CreateEngine(connection_string, **kwargs) -> db.Engine:
+    global _engine_cache
+    if connection_string in _engine_cache:
+        return _engine_cache[connection_string]
+    
     engine = db.create_engine(connection_string, **kwargs)
     if engine.url.drivername == 'sqlite':
         @event.listens_for(engine, "connect")
@@ -34,4 +43,6 @@ def CreateEngine(connection_string, **kwargs) -> db.Engine:
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.close()
+            
+    _engine_cache[connection_string] = engine
     return engine
