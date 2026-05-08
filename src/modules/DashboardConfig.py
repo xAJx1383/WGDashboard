@@ -9,7 +9,7 @@ from typing import Any
 from flask import current_app
 from .ConnectionString import ConnectionString, CreateEngine
 from .Utilities import (
-    GetRemoteEndpoint, ValidateDNSAddress
+    GetRemoteEndpoint, ValidateDNSAddress, ValidateEndpointAllowedIPs
 )
 from .DashboardAPIKey import DashboardAPIKey
 
