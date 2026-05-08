@@ -472,46 +472,7 @@ start_wgd_debug() {
 }
 
 update_wgd() {
-	_determineOS
-	if ! python3 --version > /dev/null 2>&1
-	then
-		printf "[WGDashboard] Python is not installed, trying to install now\n"
-		_installPython
-	else
-		printf "[WGDashboard] %s Python is installed\n" "$heavy_checkmark"
-	fi
-	
-	_checkPythonVersion
-	_installPythonVenv
-	_installPythonPip	
-	
-	new_ver=$($venv_python -c "import json; import urllib.request; data = urllib.request.urlopen('https://api.github.com/repos/WGDashboard/WGDashboard/releases/latest').read(); output = json.loads(data);print(output['tag_name'])")
-
-	if [ "$commandConfirmed" = "true" ]; then
-		printf "[WGDashboard] Confirmation granted.\n"
-		up="Y"
-	else
-		printf "[WGDashboard] Are you sure you want to update to the %s? (Y/N): " "$new_ver"
-		read up
-	fi
-
-	if [ "$up" = "Y" ] || [ "$up" = "y" ]; then
-		printf "[WGDashboard] Shutting down WGDashboard\n"
-
-		if check_wgd_status; then
-			stop_wgd
-		fi
-
-		mv wgd.sh wgd.sh.old
-		printf "[WGDashboard] Downloading %s from GitHub..." "$new_ver"
-		{ date; git stash; git pull https://github.com/xAJx1383/WGDashboard.git $new_ver --force; } >> ./log/update.txt
-		chmod +x ./wgd.sh
-		sudo ./wgd.sh install
-		printf "[WGDashboard] Update completed!\n"
-		rm wgd.sh.old
-	else
-		printf "[WGDashboard] Update Canceled.\n"
-	fi
+	printf "[WGDashboard] Update check is disabled.\n"
 }
 
 

@@ -1409,21 +1409,7 @@ def API_traceroute_execute():
 
 @app.get(f'{APP_PREFIX}/api/getDashboardUpdate')
 def API_getDashboardUpdate():
-    import urllib.request as req
-    try:
-        with req.urlopen("https://api.github.com/repos/WGDashboard/WGDashboard/releases/latest", timeout=5) as response:
-            r = response.read()
-        data = dict(json.loads(r))
-        tagName = data.get('tag_name')
-        htmlUrl = data.get('html_url')
-        if tagName is not None and htmlUrl is not None:
-            if version.parse(tagName) > version.parse(DashboardConfig.DashboardVersion):
-                return ResponseObject(message=f"{tagName} is now available for update!", data=htmlUrl)
-            else:
-                return ResponseObject(message="You're on the latest version")
-        return ResponseObject(False)
-    except Exception as e:
-        return ResponseObject(False, f"Request to GitHub API failed.")
+    return ResponseObject(message="Update check is disabled.")
 
 '''
 Sign Up
