@@ -20,7 +20,8 @@ from sqlalchemy import RowMapping
 from modules.Utilities import (
     RegexMatch, StringToBoolean,
     ValidateIPAddressesWithRange, ValidateDNSAddress,
-    GenerateWireguardPublicKey, GenerateWireguardPrivateKey
+    GenerateWireguardPublicKey, GenerateWireguardPrivateKey,
+    IsIPInSubnet
 )
 from packaging import version
 from modules.Email import EmailSender
