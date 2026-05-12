@@ -708,11 +708,11 @@ class WireguardConfiguration:
         with self.engine.begin() as conn:
             for p in listOfPublicKeys:
                 found, pf = self.searchPeer(p)
-                for job in pf.jobs:
-                    AllPeerJobs.deleteJob(job)
-                for shareLink in pf.ShareLink:
-                    AllPeerShareLinks.updateLinkExpireDate(shareLink.ShareID, datetime.now())
                 if found:
+                    for job in pf.jobs:
+                        AllPeerJobs.deleteJob(job)
+                    for shareLink in pf.ShareLink:
+                        AllPeerShareLinks.updateLinkExpireDate(shareLink.ShareID, datetime.now())
                     try:
                         subprocess.check_output([self.Protocol, "set", self.Name, "peer", pf.id, "remove"],
                                                 stderr=subprocess.STDOUT, timeout=10)

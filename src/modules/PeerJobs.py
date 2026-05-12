@@ -100,7 +100,11 @@ class PeerJobs:
                     )
                     self.JobLogger.log(Job.JobID, Message=f"Job is updated from if {currentJob[0].Field} {currentJob[0].Operator} {currentJob[0].Value} then {currentJob[0].Action}; to if {Job.Field} {Job.Operator} {Job.Value} then {Job.Action}")
             self.__getJobs()
-            self.WireguardConfigurations.get(Job.Configuration).searchPeer(Job.Peer)[1].getJobs()
+            conf = self.WireguardConfigurations.get(Job.Configuration)
+            if conf:
+                found, peer = conf.searchPeer(Job.Peer)
+                if found:
+                    peer.getJobs()
             return True, list(
                 filter(lambda x: x.Configuration == Job.Configuration and x.Peer == Job.Peer and x.JobID == Job.JobID,
                        self.Jobs))
