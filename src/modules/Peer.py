@@ -64,7 +64,12 @@ class Peer:
             "remote_endpoint": self.remote_endpoint,
             "preshared_key": self.preshared_key,
             "jobs": self.jobs,
-            "ShareLink": self.ShareLink
+            "ShareLink": self.ShareLink,
+            "configuration": {
+                "Name": self.configuration.Name,
+                "Protocol": self.configuration.Protocol,
+                "ListenPort": self.configuration.ListenPort
+            }
         }
 
     def __repr__(self):
