@@ -123,11 +123,13 @@ class Peer:
         try:
             newAllowedIPs = allowed_ip.replace(" ", "")
             cmd = [self.configuration.Protocol, "set", self.configuration.Name, "peer", self.id, "allowed-ips", newAllowedIPs]
+            if keepalive is not None and keepalive > 0:
+                cmd.extend(["persistent-keepalive", str(keepalive)])
             cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
             updateAllowedIp = WireguardCLI.run(cmd, timeout=10)
 
             if len(updateAllowedIp.decode().strip("\n")) != 0:
-                return False, "Update peer failed when updating Allowed IPs"
+                return False, "Update peer failed when updating Peer settings"
             saveConfig = WireguardCLI.run([f"{self.configuration.Protocol}-quick", "save", self.configuration.Name],
                                           timeout=10)
             if f"wg showconf {self.configuration.Name}" not in saveConfig.decode().strip('\n'):

@@ -196,8 +196,26 @@ _reload_interval = 5
 
 def _on_app_shutdown():
     _app_stop_event.set()
+    flush_usage_on_shutdown()
     if 'SystemStatus' in globals():
         globals()['SystemStatus'].stop()
+
+def flush_usage_on_shutdown():
+    """
+    Iterate through all active WireguardConfiguration objects and call updatePeersData()
+    to ensure final usage deltas are persisted before exit.
+    """
+    app.logger.info("Graceful shutdown: Flushing usage data...")
+    with _wireguard_config_lock:
+        # Create a copy of keys to avoid modification during iteration
+        for name in list(WireguardConfigurations.keys()):
+            config = WireguardConfigurations[name]
+            if config and config.getStatus():
+                try:
+                    config.updatePeersData()
+                    app.logger.info(f"Flushed data for {name}")
+                except Exception as e:
+                    app.logger.error(f"Error flushing data for {name}: {e}")
 
 atexit.register(_on_app_shutdown)
 

@@ -613,6 +613,8 @@ class WireguardConfiguration:
 
                 try:
                     cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
+                    if p.get('keepalive') is not None and int(p.get('keepalive')) > 0:
+                        cmd.extend(["persistent-keepalive", str(p.get('keepalive'))])
                     cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
                     WireguardCLI.run(cmd, timeout=10)
                 finally:
@@ -670,6 +672,8 @@ class WireguardConfiguration:
 
                     try:
                         cmd = [self.Protocol, "set", self.Name, "peer", restrictedPeer['id'], "allowed-ips", restrictedPeer['allowed_ip'].replace(' ', '')]
+                        if restrictedPeer.get('keepalive') is not None and int(restrictedPeer.get('keepalive')) > 0:
+                            cmd.extend(["persistent-keepalive", str(restrictedPeer.get('keepalive'))])
                         cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
                         WireguardCLI.run(cmd, timeout=10)
                     finally:
