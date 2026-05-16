@@ -221,11 +221,14 @@ atexit.register(_on_app_shutdown)
 
 CONFIGURATION_PATH = os.getenv('CONFIGURATION_PATH', '.')
 
+from peer_panel import peer_panel
+
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 5206928
 with app.app_context():
     DashboardConfig = DashboardConfig()
 app.secret_key = DashboardConfig.GetConfig("Server", "secret_key")[1]
 app.json = CustomJsonEncoder(app)
+app.config['WGD'] = WireguardConfigurations
 with app.app_context():
     SystemStatus = SystemStatus()
     EmailSender = EmailSender(DashboardConfig)
@@ -238,6 +241,7 @@ with app.app_context():
     InitWireguardConfigurationsList(startup=True)
     DashboardClients: DashboardClients = DashboardClients(WireguardConfigurations)
     app.register_blueprint(createClientBlueprint(WireguardConfigurations, DashboardConfig, DashboardClients))
+    app.register_blueprint(peer_panel, url_prefix='/peer')
 
 _, APP_PREFIX = DashboardConfig.GetConfig("Server", "app_prefix")
 cors = CORS(app, resources={rf"{APP_PREFIX}/api/*": {
