@@ -70,3 +70,34 @@ def test_blueprint_isolation():
         # 2. Access with unknown IP
         response = client.get('/peer/usage_check', environ_overrides={'REMOTE_ADDR': '10.0.0.5'})
         assert response.status_code == 403
+
+def test_usage_route():
+    app = Flask(__name__)
+    app.register_blueprint(peer_panel, url_prefix='/peer')
+    
+    peer1 = MagicMock()
+    peer1.id = "peer1_pubkey"
+    peer1.name = "Test Peer"
+    peer1.allowed_ip = "10.0.0.2/32"
+    peer1.total_receive = 1024
+    peer1.total_sent = 2048
+    peer1.total_data = 3072
+    peer1.status = "running"
+    peer1.latest_handshake = "2 minutes ago"
+    peer1.configuration.Name = "wg0"
+    
+    conf1 = MagicMock()
+    conf1.getStatus.return_value = True
+    conf1.Peers = [peer1]
+    
+    app.config['WGD'] = {"wg0": conf1}
+    
+    with app.test_client() as client:
+        response = client.get('/peer/usage', environ_overrides={'REMOTE_ADDR': '10.0.0.2'})
+        assert response.status_code == 200
+        # Check if some key content is present in the rendered HTML
+        html = response.get_data(as_text=True)
+        assert "Test Peer" in html
+        assert "peer1_pubkey" in html
+        assert "1.0 KB" in html # 1024 bytes
+        assert "2.0 KB" in html # 2048 bytes

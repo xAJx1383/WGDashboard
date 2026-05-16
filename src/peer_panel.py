@@ -1,7 +1,7 @@
-from flask import Blueprint, request, abort, g
-from modules.Utilities import IsIPInSubnet
+from flask import Blueprint, request, abort, g, render_template
+from modules.Utilities import IsIPInSubnet, FormatBytes
 
-peer_panel = Blueprint('peer_panel', __name__)
+peer_panel = Blueprint('peer_panel', __name__, template_folder='../static/dist/WGDashboardPeerPanel')
 
 def get_peer_by_ip(remote_addr, wireguard_configurations):
     """
@@ -43,3 +43,10 @@ def usage_check():
     Test route to verify peer identification.
     """
     return {"status": "identified", "peer_id": g.current_peer.id}
+
+@peer_panel.route('/usage', methods=['GET'])
+def usage():
+    """
+    Renders the peer usage panel.
+    """
+    return render_template('panel.html', peer=g.current_peer, format_bytes=FormatBytes)
