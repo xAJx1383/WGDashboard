@@ -110,3 +110,19 @@ def ValidatePasswordStrength(password: str) -> tuple[bool, str] | tuple[bool, No
         return False, "Password must contain at least 1 special character from $&+,:;=?@#|'<>.-^*()%!~_-"
     
     return True, None
+
+def FormatBytes(size_bytes, precision=2):
+    """
+    Format bytes to human readable string.
+    @param size_bytes: Bytes to format
+    @param precision: Decimal precision
+    @return: Human readable string
+    """
+    if size_bytes == 0:
+        return "0 B"
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    import math
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, precision)
+    return f"{s} {size_name[i]}"
