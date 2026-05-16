@@ -268,14 +268,15 @@ class WireguardConfiguration:
             with self.engine.begin() as conn:
                 for t in tables_to_migrate:
                     if inspector.has_table(t):
+                        # Use CASE to avoid re-multiplying if data already looks like bytes (> 1M GB is unlikely)
                         conn.execute(sqlalchemy.text(f"""
                             UPDATE "{t}" SET 
-                                total_receive = CAST(total_receive * {GB_TO_BYTES} AS INTEGER),
-                                total_sent = CAST(total_sent * {GB_TO_BYTES} AS INTEGER),
-                                total_data = CAST(total_data * {GB_TO_BYTES} AS INTEGER),
-                                cumu_receive = CAST(cumu_receive * {GB_TO_BYTES} AS INTEGER),
-                                cumu_sent = CAST(cumu_sent * {GB_TO_BYTES} AS INTEGER),
-                                cumu_data = CAST(cumu_data * {GB_TO_BYTES} AS INTEGER)
+                                total_receive = CAST(CASE WHEN total_receive < 1000000 THEN total_receive * {GB_TO_BYTES} ELSE total_receive END AS INTEGER),
+                                total_sent = CAST(CASE WHEN total_sent < 1000000 THEN total_sent * {GB_TO_BYTES} ELSE total_sent END AS INTEGER),
+                                total_data = CAST(CASE WHEN total_data < 1000000 THEN total_data * {GB_TO_BYTES} ELSE total_data END AS INTEGER),
+                                cumu_receive = CAST(CASE WHEN cumu_receive < 1000000 THEN cumu_receive * {GB_TO_BYTES} ELSE cumu_receive END AS INTEGER),
+                                cumu_sent = CAST(CASE WHEN cumu_sent < 1000000 THEN cumu_sent * {GB_TO_BYTES} ELSE cumu_sent END AS INTEGER),
+                                cumu_data = CAST(CASE WHEN cumu_data < 1000000 THEN cumu_data * {GB_TO_BYTES} ELSE cumu_data END AS INTEGER)
                         """))
 
         # Normalize potentially corrupted data (Task 2)
