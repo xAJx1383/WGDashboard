@@ -5,6 +5,7 @@ import secrets
 import subprocess
 import uuid
 
+from .WireguardCLI import WireguardCLI
 from .Peer import Peer
 from .Utilities import ValidateIPAddressesWithRange, ValidateDNSAddress, GenerateWireguardPublicKey
 
@@ -62,12 +63,12 @@ class AmneziaWGPeer(Peer):
             newAllowedIPs = allowed_ip.replace(" ", "")
             cmd = [self.configuration.Protocol, "set", self.configuration.Name, "peer", self.id, "allowed-ips", newAllowedIPs]
             cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
-            updateAllowedIp = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=10)
+            updateAllowedIp = WireguardCLI.run(cmd, timeout=10)
 
             if len(updateAllowedIp.decode().strip("\n")) != 0:
                 return False, "Update peer failed when updating Allowed IPs"
-            saveConfig = subprocess.check_output([f"{self.configuration.Protocol}-quick", "save", self.configuration.Name],
-                                                 stderr=subprocess.STDOUT, timeout=10)
+            saveConfig = WireguardCLI.run([f"{self.configuration.Protocol}-quick", "save", self.configuration.Name],
+                                          timeout=10)
             if f"wg showconf {self.configuration.Name}" not in saveConfig.decode().strip('\n'):
                 return False, "Update peer failed when saving the configuration"
 

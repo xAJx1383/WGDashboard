@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from itertools import islice
 from flask import current_app
 
+from .WireguardCLI import WireguardCLI
 from .ConnectionString import ConnectionString, CreateEngine
 from .DashboardConfig import DashboardConfig
 from .Peer import Peer
@@ -583,11 +584,11 @@ class WireguardConfiguration:
                 try:
                     cmd = [self.Protocol, "set", self.Name, "peer", p['id'], "allowed-ips", p['allowed_ip'].replace(' ', '')]
                     cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
-                    subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=10)
+                    WireguardCLI.run(cmd, timeout=10)
                 finally:
                     if temp_psk_path and os.path.exists(temp_psk_path):
                         os.remove(temp_psk_path)
-            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT, timeout=10)
+            WireguardCLI.run([f"{self.Protocol}-quick", "save", self.Name], timeout=10)
             self.getPeers()
             for p in peers:
                 p = self.searchPeer(p['id'])
@@ -640,7 +641,7 @@ class WireguardConfiguration:
                     try:
                         cmd = [self.Protocol, "set", self.Name, "peer", restrictedPeer['id'], "allowed-ips", restrictedPeer['allowed_ip'].replace(' ', '')]
                         cmd.extend(["preshared-key", temp_psk_path if temp_psk_path else "/dev/null"])
-                        subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=10)
+                        WireguardCLI.run(cmd, timeout=10)
                     finally:
                         if temp_psk_path and os.path.exists(temp_psk_path):
                             os.remove(temp_psk_path)
@@ -662,8 +663,7 @@ class WireguardConfiguration:
                 found, pf = self.searchPeer(p)
                 if found:
                     try:
-                        subprocess.check_output([self.Protocol, "set", self.Name, "peer", pf.id, "remove"],
-                                                stderr=subprocess.STDOUT, timeout=10)
+                        WireguardCLI.run([self.Protocol, "set", self.Name, "peer", pf.id, "remove"], timeout=10)
                         conn.execute(
                             self.peersRestrictedTable.insert().from_select(
                                 [c.name for c in self.peersTable.columns],
@@ -714,8 +714,7 @@ class WireguardConfiguration:
                     for shareLink in pf.ShareLink:
                         AllPeerShareLinks.updateLinkExpireDate(shareLink.ShareID, datetime.now())
                     try:
-                        subprocess.check_output([self.Protocol, "set", self.Name, "peer", pf.id, "remove"],
-                                                stderr=subprocess.STDOUT, timeout=10)
+                        WireguardCLI.run([self.Protocol, "set", self.Name, "peer", pf.id, "remove"], timeout=10)
                         conn.execute(
                             self.peersTable.delete().where(
                                 self.peersTable.columns.id == pf.id
@@ -745,7 +744,7 @@ class WireguardConfiguration:
 
     def __wgSave(self) -> tuple[bool, str] | tuple[bool, None]:
         try:
-            subprocess.check_output([f"{self.Protocol}-quick", "save", self.Name], stderr=subprocess.STDOUT, timeout=10)
+            WireguardCLI.run([f"{self.Protocol}-quick", "save", self.Name], timeout=10)
             return True, None
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             return False, str(e)
@@ -754,8 +753,7 @@ class WireguardConfiguration:
         if not self.getStatus():
             self.toggleConfiguration()
         try:
-            latestHandshake = subprocess.check_output([self.Protocol, "show", self.Name, "latest-handshakes"],
-                                                      stderr=subprocess.STDOUT, timeout=10)
+            latestHandshake = WireguardCLI.run([self.Protocol, "show", self.Name, "latest-handshakes"], timeout=10)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             return "stopped"
         latestHandshake = latestHandshake.decode("UTF-8").split()
@@ -794,8 +792,7 @@ class WireguardConfiguration:
         if not self.getStatus():
             self.toggleConfiguration()
         try:
-            data_usage = subprocess.check_output([self.Protocol, "show", self.Name, "transfer"],
-                                                 stderr=subprocess.STDOUT, timeout=10)
+            data_usage = WireguardCLI.run([self.Protocol, "show", self.Name, "transfer"], timeout=10)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             return "stopped"
         data_usage = data_usage.decode("UTF-8").split("\n")
@@ -861,8 +858,7 @@ class WireguardConfiguration:
         if not self.getStatus():
             self.toggleConfiguration()
         try:
-            data_usage = subprocess.check_output([self.Protocol, "show", self.Name, "endpoints"],
-                                                 stderr=subprocess.STDOUT, timeout=10)
+            data_usage = WireguardCLI.run([self.Protocol, "show", self.Name, "endpoints"], timeout=10)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             return "stopped"
         data_usage = data_usage.decode("UTF-8").split()
@@ -882,8 +878,8 @@ class WireguardConfiguration:
         if not self.getStatus():
             return
         try:
-            dump = subprocess.check_output([self.Protocol, "show", self.Name, "dump"],
-                                           stderr=subprocess.STDOUT, timeout=10).decode("UTF-8").strip().split("\n")
+            dump = WireguardCLI.run([self.Protocol, "show", self.Name, "dump"],
+                                           timeout=10).decode("UTF-8").strip().split("\n")
             if len(dump) < 2:
                 return
             
@@ -960,14 +956,14 @@ class WireguardConfiguration:
         self.getStatus()
         if self.Status:
             try:
-                check = subprocess.check_output([f"{self.Protocol}-quick", "down", self.Name],
-                                                stderr=subprocess.STDOUT, timeout=10)
+                check = WireguardCLI.run([f"{self.Protocol}-quick", "down", self.Name],
+                                                timeout=10)
                 self.removeAutostart()
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
                 return False, str(exc.output.strip().decode("utf-8")) if hasattr(exc, 'output') else str(exc)
         else:
             try:
-                check = subprocess.check_output([f"{self.Protocol}-quick", "up", self.Name], stderr=subprocess.STDOUT, timeout=10)
+                check = WireguardCLI.run([f"{self.Protocol}-quick", "up", self.Name], timeout=10)
                 self.addAutostart()
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
                 return False, str(exc.output.strip().decode("utf-8")) if hasattr(exc, 'output') else str(exc)

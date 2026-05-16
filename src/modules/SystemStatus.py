@@ -1,5 +1,6 @@
 import shutil, subprocess, time, threading, psutil, logging
 from flask import current_app
+from .WireguardCLI import WireguardCLI
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +211,7 @@ class NetworkInterfaces:
     def getInterfacePriorities(self):
         if shutil.which("ip"):
             try:
-                result = subprocess.check_output(["ip", "route", "show"], timeout=10).decode()
+                result = WireguardCLI.run(["ip", "route", "show"], timeout=10).decode()
                 priorities = {}
                 for line in result.splitlines():
                     if "metric" in line and "dev" in line:

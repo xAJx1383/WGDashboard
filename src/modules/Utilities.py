@@ -1,5 +1,6 @@
 import re, ipaddress
 import subprocess
+from .WireguardCLI import WireguardCLI
 
 
 def RegexMatch(regex, text) -> bool:
@@ -78,16 +79,16 @@ def IsIPInSubnet(ip: str, subnet: str) -> bool:
 
 def GenerateWireguardPublicKey(privateKey: str) -> tuple[bool, str] | tuple[bool, None]:
     try:
-        publicKey = subprocess.check_output(["wg", "pubkey"], input=privateKey.encode(),
-                                            stderr=subprocess.STDOUT, timeout=10)
+        publicKey = WireguardCLI.run(["wg", "pubkey"], input=privateKey.encode(),
+                                     timeout=10)
         return True, publicKey.decode().strip('\n')
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False, None
 
 def GenerateWireguardPrivateKey() -> tuple[bool, str] | tuple[bool, None]:
     try:
-        publicKey = subprocess.check_output(["wg", "genkey"],
-                                            stderr=subprocess.STDOUT, timeout=10)
+        publicKey = WireguardCLI.run(["wg", "genkey"],
+                                     timeout=10)
         return True, publicKey.decode().strip('\n')
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False, None    

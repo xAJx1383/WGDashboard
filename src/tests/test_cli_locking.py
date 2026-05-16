@@ -31,7 +31,7 @@ def test_cli_concurrency():
     
     import subprocess
     
-    def mocked_check_output(cmd, stderr=None, timeout=None):
+    def mocked_check_output(cmd, stderr=None, timeout=None, **kwargs):
         start_time = time.time()
         time.sleep(0.05)
         end_time = time.time()
