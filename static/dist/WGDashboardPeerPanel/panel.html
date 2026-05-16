@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WireGuard Peer Panel - {{ peer.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 2rem; }
+        .card { border: none; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); }
+        .stat-value { font-size: 1.5rem; font-weight: bold; }
+        .stat-label { color: #6c757d; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05rem; }
+        .peer-id { word-break: break-all; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Connection Status</h5>
+                        <button class="btn btn-sm btn-outline-light" onclick="window.location.reload();">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4 text-center">
+                            <h2 class="mb-1">{{ peer.name or 'Untitled Peer' }}</h2>
+                            <div class="peer-id text-muted small">{{ peer.id }}</div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <div class="stat-label">Upload</div>
+                                    <div class="stat-value text-success">{{ format_bytes(peer.total_receive) }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <div class="stat-label">Download</div>
+                                    <div class="stat-value text-primary">{{ format_bytes(peer.total_sent) }}</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <div class="stat-label">Total Data</div>
+                                    <div class="stat-value">{{ format_bytes(peer.total_data) }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span class="text-muted">Allowed IPs</span>
+                                <span class="badge bg-secondary font-monospace">{{ peer.allowed_ip }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span class="text-muted">Last Handshake</span>
+                                <span class="text-dark">{{ peer.latest_handshake or 'Never' }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span class="text-muted">Configuration</span>
+                                <span class="text-dark">{{ peer.configuration.Name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-center text-muted small py-3">
+                        Securely identified via VPN IP: {{ request.remote_addr }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
