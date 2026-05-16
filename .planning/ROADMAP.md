@@ -2,8 +2,8 @@
 
 ## Phases
 - [x] **Phase 1: Stabilization & Robust Tracking** - Backend overhaul for atomic updates and high-precision usage persistence.
-- [ ] **Phase 2: Restricted Peer Usage Panel** - Implementation of a secure, IP-restricted client portal for viewing personal stats.
-- [ ] **Phase 3: Integration & Optimization** - UI updates for the main dashboard and system-wide performance tuning.
+- [x] **Phase 2: Restricted Peer Usage Panel** - Implementation of a secure, IP-restricted client portal for viewing personal stats.
+- [x] **Phase 3: Integration & Optimization** - UI updates for the main dashboard and system-wide performance tuning.
 
 ## Phase Details
 
@@ -31,9 +31,9 @@
   3. Non-VPN clients (external internet) are blocked from accessing the panel.
   4. The panel UI is responsive and accessible on mobile/desktop.
 **Plans**:
-- [ ] 02-01-PLAN.md — Blueprint & Identification Foundation
-- [ ] 02-02-PLAN.md — Responsive UI & Personal Metrics
-- [ ] 02-03-PLAN.md — Configurable Port & Service Isolation
+- [x] 02-01-PLAN.md — Blueprint & Identification Foundation
+- [x] 02-02-PLAN.md — Responsive UI & Personal Metrics
+- [x] 02-03-PLAN.md — Configurable Port & Service Isolation
 
 ### Phase 3: Integration & Optimization
 **Goal**: Finalize UI integration and ensure system-wide performance and reliability.
@@ -43,7 +43,10 @@
   1. Main dashboard displays "Total Usage" (cumulative) for all peers.
   2. Dashboard service handles shutdown gracefully without losing pending usage data.
   3. Performance verified for interfaces with large numbers of peers.
-**Plans**: TBD
+**Plans**:
+- [x] 03-01-PLAN.md — High-Precision UI Integration
+- [x] 03-02-PLAN.md — Performance Verification & Optimization
+- [x] 03-03-PLAN.md — Reliability Fix for Database Migration
 **UI hint**: yes
 
 ## Progress Table
@@ -51,5 +54,5 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Stabilization & Robust Tracking | 3/3 | Completed | 2026-05-16 |
-| 2. Restricted Peer Usage Panel | 0/3 | In Progress | - |
-| 3. Integration & Optimization | 0/1 | Not started | - |
+| 2. Restricted Peer Usage Panel | 3/3 | Completed | 2026-05-16 |
+| 3. Integration & Optimization | 3/3 | Completed | 2026-05-16 |
