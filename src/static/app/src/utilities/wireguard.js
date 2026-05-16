@@ -3,6 +3,18 @@
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+export function formatBytes(bytes, decimals = 2) {
+	if (!+bytes) return '0 Bytes'
+
+	const k = 1024
+	const dm = decimals < 0 ? 0 : decimals
+	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
+	const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
+
 (function() {
 	function gf(init) {
 		var r = new Float64Array(16);
@@ -308,6 +320,7 @@
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
-		}
+		},
+		formatBytes: formatBytes
 	};
 })();
