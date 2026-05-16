@@ -69,6 +69,32 @@ class AmneziaWireguardConfiguration(WireguardConfiguration):
         if dbName is None:
             dbName = self.Name
 
+        # Check if we need to migrate from Float (GB) to BigInteger (Bytes)
+        inspector = sqlalchemy.inspect(self.engine)
+        needs_migration = False
+        if inspector.has_table(dbName):
+            columns = inspector.get_columns(dbName)
+            for col in columns:
+                if col['name'] == 'total_receive' and isinstance(col['type'], sqlalchemy.Float):
+                    needs_migration = True
+                    break
+        
+        if needs_migration:
+            current_app.logger.info(f"Migrating database {dbName} from Float (GB) to BigInteger (Bytes)")
+            GB_TO_BYTES = 1024**3
+            tables_to_migrate = [dbName, f'{dbName}_restrict_access', f'{dbName}_transfer', f'{dbName}_deleted']
+            with self.engine.begin() as conn:
+                for t in tables_to_migrate:
+                    if inspector.has_table(t):
+                        conn.execute(sqlalchemy.text(f"""
+                            UPDATE "{t}" SET 
+                                total_receive = CAST(total_receive * {GB_TO_BYTES} AS INTEGER),
+                                total_sent = CAST(total_sent * {GB_TO_BYTES} AS INTEGER),
+                                total_data = CAST(total_data * {GB_TO_BYTES} AS INTEGER),
+                                cumu_receive = CAST(cumu_receive * {GB_TO_BYTES} AS INTEGER),
+                                cumu_sent = CAST(cumu_sent * {GB_TO_BYTES} AS INTEGER),
+                                cumu_data = CAST(cumu_data * {GB_TO_BYTES} AS INTEGER)
+                        """))
 
         self.peersTable = sqlalchemy.Table(
             dbName, self.metadata,
@@ -78,16 +104,16 @@ class AmneziaWireguardConfiguration(WireguardConfiguration):
             sqlalchemy.Column('advanced_security', sqlalchemy.String(255)),
             sqlalchemy.Column('endpoint_allowed_ip', sqlalchemy.Text),
             sqlalchemy.Column('name', sqlalchemy.Text),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('status', sqlalchemy.String(255)),
             sqlalchemy.Column('latest_handshake', sqlalchemy.String(255)),
             sqlalchemy.Column('allowed_ip', sqlalchemy.String(255)),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('mtu', sqlalchemy.Integer),
             sqlalchemy.Column('keepalive', sqlalchemy.Integer),
             sqlalchemy.Column('remote_endpoint', sqlalchemy.String(255)),
@@ -102,16 +128,16 @@ class AmneziaWireguardConfiguration(WireguardConfiguration):
             sqlalchemy.Column('advanced_security', sqlalchemy.String(255)),
             sqlalchemy.Column('endpoint_allowed_ip', sqlalchemy.Text),
             sqlalchemy.Column('name', sqlalchemy.Text),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('status', sqlalchemy.String(255)),
             sqlalchemy.Column('latest_handshake', sqlalchemy.String(255)),
             sqlalchemy.Column('allowed_ip', sqlalchemy.String(255)),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('mtu', sqlalchemy.Integer),
             sqlalchemy.Column('keepalive', sqlalchemy.Integer),
             sqlalchemy.Column('remote_endpoint', sqlalchemy.String(255)),
@@ -121,12 +147,12 @@ class AmneziaWireguardConfiguration(WireguardConfiguration):
         self.peersTransferTable = sqlalchemy.Table(
             f'{dbName}_transfer', self.metadata,
             sqlalchemy.Column('id', sqlalchemy.String(255), nullable=False),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('time', (sqlalchemy.DATETIME if self.DashboardConfig.GetConfig("Database", "type")[1] == 'sqlite' else sqlalchemy.TIMESTAMP),
                               server_default=sqlalchemy.func.now()),
             extend_existing=True
@@ -139,22 +165,23 @@ class AmneziaWireguardConfiguration(WireguardConfiguration):
             sqlalchemy.Column('advanced_security', sqlalchemy.String(255)),
             sqlalchemy.Column('endpoint_allowed_ip', sqlalchemy.Text),
             sqlalchemy.Column('name', sqlalchemy.Text),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('status', sqlalchemy.String(255)),
             sqlalchemy.Column('latest_handshake', sqlalchemy.String(255)),
             sqlalchemy.Column('allowed_ip', sqlalchemy.String(255)),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('mtu', sqlalchemy.Integer),
             sqlalchemy.Column('keepalive', sqlalchemy.Integer),
             sqlalchemy.Column('remote_endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('preshared_key', sqlalchemy.String(255)),
             extend_existing=True
         )
+
         self.infoTable = sqlalchemy.Table(
             'ConfigurationsInfo', self.metadata,
             sqlalchemy.Column('ID', sqlalchemy.String(255), primary_key=True),

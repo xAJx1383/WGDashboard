@@ -240,6 +240,35 @@ class WireguardConfiguration:
     def createDatabase(self, dbName = None):
         if dbName is None:
             dbName = self.Name
+        
+        # Check if we need to migrate from Float (GB) to BigInteger (Bytes)
+        # We do this by checking if the columns are currently Float
+        inspector = sqlalchemy.inspect(self.engine)
+        needs_migration = False
+        if inspector.has_table(dbName):
+            columns = inspector.get_columns(dbName)
+            for col in columns:
+                if col['name'] == 'total_receive' and isinstance(col['type'], sqlalchemy.Float):
+                    needs_migration = True
+                    break
+        
+        if needs_migration:
+            current_app.logger.info(f"Migrating database {dbName} from Float (GB) to BigInteger (Bytes)")
+            GB_TO_BYTES = 1024**3
+            tables_to_migrate = [dbName, f'{dbName}_restrict_access', f'{dbName}_transfer', f'{dbName}_deleted']
+            with self.engine.begin() as conn:
+                for t in tables_to_migrate:
+                    if inspector.has_table(t):
+                        conn.execute(sqlalchemy.text(f"""
+                            UPDATE "{t}" SET 
+                                total_receive = CAST(total_receive * {GB_TO_BYTES} AS INTEGER),
+                                total_sent = CAST(total_sent * {GB_TO_BYTES} AS INTEGER),
+                                total_data = CAST(total_data * {GB_TO_BYTES} AS INTEGER),
+                                cumu_receive = CAST(cumu_receive * {GB_TO_BYTES} AS INTEGER),
+                                cumu_sent = CAST(cumu_sent * {GB_TO_BYTES} AS INTEGER),
+                                cumu_data = CAST(cumu_data * {GB_TO_BYTES} AS INTEGER)
+                        """))
+
         self.peersTable = sqlalchemy.Table(
             dbName, self.metadata,
             sqlalchemy.Column('id', sqlalchemy.String(255), nullable=False, primary_key=True),
@@ -247,16 +276,16 @@ class WireguardConfiguration:
             sqlalchemy.Column('DNS', sqlalchemy.Text),
             sqlalchemy.Column('endpoint_allowed_ip', sqlalchemy.Text),
             sqlalchemy.Column('name', sqlalchemy.Text),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('status', sqlalchemy.String(255)),
             sqlalchemy.Column('latest_handshake', sqlalchemy.String(255)),
             sqlalchemy.Column('allowed_ip', sqlalchemy.String(255)),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('mtu', sqlalchemy.Integer),
             sqlalchemy.Column('keepalive', sqlalchemy.Integer),
             sqlalchemy.Column('remote_endpoint', sqlalchemy.String(255)),
@@ -270,16 +299,16 @@ class WireguardConfiguration:
             sqlalchemy.Column('DNS', sqlalchemy.Text),
             sqlalchemy.Column('endpoint_allowed_ip', sqlalchemy.Text),
             sqlalchemy.Column('name', sqlalchemy.Text),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('status', sqlalchemy.String(255)),
             sqlalchemy.Column('latest_handshake', sqlalchemy.String(255)),
             sqlalchemy.Column('allowed_ip', sqlalchemy.String(255)),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('mtu', sqlalchemy.Integer),
             sqlalchemy.Column('keepalive', sqlalchemy.Integer),
             sqlalchemy.Column('remote_endpoint', sqlalchemy.String(255)),
@@ -289,12 +318,12 @@ class WireguardConfiguration:
         self.peersTransferTable = sqlalchemy.Table(
             f'{dbName}_transfer', self.metadata,
             sqlalchemy.Column('id', sqlalchemy.String(255), nullable=False),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('time', (sqlalchemy.DATETIME if self.DashboardConfig.GetConfig("Database", "type")[1] == 'sqlite' else sqlalchemy.TIMESTAMP),
                               server_default=sqlalchemy.func.now()),
             extend_existing=True
@@ -316,22 +345,23 @@ class WireguardConfiguration:
             sqlalchemy.Column('DNS', sqlalchemy.Text),
             sqlalchemy.Column('endpoint_allowed_ip', sqlalchemy.Text),
             sqlalchemy.Column('name', sqlalchemy.Text),
-            sqlalchemy.Column('total_receive', sqlalchemy.Float),
-            sqlalchemy.Column('total_sent', sqlalchemy.Float),
-            sqlalchemy.Column('total_data', sqlalchemy.Float),
+            sqlalchemy.Column('total_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('total_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('status', sqlalchemy.String(255)),
             sqlalchemy.Column('latest_handshake', sqlalchemy.String(255)),
             sqlalchemy.Column('allowed_ip', sqlalchemy.String(255)),
-            sqlalchemy.Column('cumu_receive', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_sent', sqlalchemy.Float),
-            sqlalchemy.Column('cumu_data', sqlalchemy.Float),
+            sqlalchemy.Column('cumu_receive', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_sent', sqlalchemy.BigInteger),
+            sqlalchemy.Column('cumu_data', sqlalchemy.BigInteger),
             sqlalchemy.Column('mtu', sqlalchemy.Integer),
             sqlalchemy.Column('keepalive', sqlalchemy.Integer),
             sqlalchemy.Column('remote_endpoint', sqlalchemy.String(255)),
             sqlalchemy.Column('preshared_key', sqlalchemy.String(255)),
             extend_existing=True
         )
+
         self.infoTable = sqlalchemy.Table(
             'ConfigurationsInfo', self.metadata,
             sqlalchemy.Column('ID', sqlalchemy.String(255), primary_key=True),
@@ -808,27 +838,23 @@ class WireguardConfiguration:
                         )
                     ).mappings().fetchone()
                     if cur_i is not None:
-                        # print(cur_i is None)
                         total_sent = cur_i['total_sent']
-                        # print(cur_i is None)
                         total_receive = cur_i['total_receive']
                         try:
-                            cur_total_sent = float(data_usage[i][2]) / (1024 ** 3)
-                            cur_total_receive = float(data_usage[i][1]) / (1024 ** 3)
+                            # transfer output is raw bytes from wg show
+                            cur_total_sent = int(data_usage[i][2])
+                            cur_total_receive = int(data_usage[i][1])
                         except (ValueError, IndexError):
                             continue
+                        
                         updates = {}
+                        # Delta Pattern for Sent
                         if cur_total_sent < total_sent:
                             updates["cumu_sent"] = cur_i['cumu_sent'] + total_sent
-                            total_sent = cur_total_sent
-                        else:
-                            total_sent = cur_total_sent
                         
+                        # Delta Pattern for Receive
                         if cur_total_receive < total_receive:
                             updates["cumu_receive"] = cur_i['cumu_receive'] + total_receive
-                            total_receive = cur_total_receive
-                        else:
-                            total_receive = cur_total_receive
                         
                         if updates:
                             updates["cumu_data"] = (updates.get("cumu_sent", cur_i['cumu_sent']) + 
@@ -841,16 +867,17 @@ class WireguardConfiguration:
 
                         status, p = self.searchPeer(data_usage[i][0])
                         if status:
-                            if p.total_receive != total_receive or p.total_sent != total_sent:
+                            if p.total_receive != cur_total_receive or p.total_sent != cur_total_sent:
                                 conn.execute(
                                     self.peersTable.update().values({
-                                        "total_receive": total_receive,
-                                        "total_sent": total_sent,
-                                        "total_data": total_receive + total_sent
+                                        "total_receive": cur_total_receive,
+                                        "total_sent": cur_total_sent,
+                                        "total_data": cur_total_receive + cur_total_sent
                                     }).where(
                                         self.peersTable.c.id == data_usage[i][0]
                                     )
                                 )
+
 
             
 
@@ -910,23 +937,18 @@ class WireguardConfiguration:
                         total_sent = cur_i['total_sent']
                         total_receive = cur_i['total_receive']
                         try:
-                            cur_total_sent = float(transfer_tx) / (1024 ** 3)
-                            cur_total_receive = float(transfer_rx) / (1024 ** 3)
+                            # transfer_tx/rx are already integers from dump split
+                            cur_total_sent = int(transfer_tx)
+                            cur_total_receive = int(transfer_rx)
                         except (ValueError, TypeError):
                             continue
                         
                         updates = {}
                         if cur_total_sent < total_sent:
                             updates["cumu_sent"] = cur_i['cumu_sent'] + total_sent
-                            total_sent = cur_total_sent
-                        else:
-                            total_sent = cur_total_sent
-
+                        
                         if cur_total_receive < total_receive:
                             updates["cumu_receive"] = cur_i['cumu_receive'] + total_receive
-                            total_receive = cur_total_receive
-                        else:
-                            total_receive = cur_total_receive
 
                         if updates:
                             updates["cumu_data"] = (updates.get("cumu_sent", cur_i['cumu_sent']) + 
@@ -942,13 +964,14 @@ class WireguardConfiguration:
                                 "latest_handshake": handshake_str,
                                 "status": status,
                                 "endpoint": endpoint,
-                                "total_receive": total_receive,
-                                "total_sent": total_sent,
-                                "total_data": total_receive + total_sent
+                                "total_receive": cur_total_receive,
+                                "total_sent": cur_total_sent,
+                                "total_data": cur_total_receive + cur_total_sent
                             }).where(
                                 self.peersTable.c.id == peer_id
                             )
                         )
+
         except Exception as e:
             current_app.logger.error(f"Failed to update peers data for {self.Name}: {e}")
 
