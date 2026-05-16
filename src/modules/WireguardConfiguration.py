@@ -245,7 +245,16 @@ class WireguardConfiguration:
         # We do this by checking if the columns are currently Float
         inspector = sqlalchemy.inspect(self.engine)
         needs_migration = False
-        if inspector.has_table(dbName):
+        migration_id = f'float_to_bigint_v1_{dbName}'
+        migration_applied = False
+
+        if inspector.has_table('wgd_migrations'):
+            with self.engine.connect() as conn:
+                res = conn.execute(sqlalchemy.text("SELECT id FROM wgd_migrations WHERE id = :id"), {"id": migration_id}).fetchone()
+                if res:
+                    migration_applied = True
+
+        if not migration_applied and inspector.has_table(dbName):
             columns = inspector.get_columns(dbName)
             for col in columns:
                 if col['name'] == 'total_receive' and isinstance(col['type'], sqlalchemy.Float):
@@ -268,6 +277,34 @@ class WireguardConfiguration:
                                 cumu_sent = CAST(cumu_sent * {GB_TO_BYTES} AS INTEGER),
                                 cumu_data = CAST(cumu_data * {GB_TO_BYTES} AS INTEGER)
                         """))
+
+        # Normalize potentially corrupted data (Task 2)
+        if not migration_applied and inspector.has_table(dbName):
+            current_app.logger.info(f"Checking for corrupted data in {dbName}")
+            THRESHOLD = 1024**5 # 1 PB
+            GB_TO_BYTES = 1024**3
+            cols_to_fix = ['total_receive', 'total_sent', 'total_data', 'cumu_receive', 'cumu_sent', 'cumu_data']
+            tables_to_check = [dbName, f'{dbName}_restrict_access', f'{dbName}_transfer', f'{dbName}_deleted']
+            with self.engine.begin() as conn:
+                for t in tables_to_check:
+                    if inspector.has_table(t):
+                        rows = conn.execute(sqlalchemy.text(f'SELECT * FROM "{t}"')).mappings().fetchall()
+                        for row in rows:
+                            updates = {}
+                            for col in cols_to_fix:
+                                if col in row and row[col] is not None and row[col] > THRESHOLD:
+                                    val = row[col]
+                                    while val > THRESHOLD:
+                                        val //= GB_TO_BYTES
+                                    updates[col] = val
+                            if updates:
+                                if 'id' in row:
+                                    where_clause = 'id = :row_id'
+                                    params = {**updates, "row_id": row['id']}
+                                    if t.endswith('_transfer') and 'time' in row:
+                                        where_clause += ' AND time = :row_time'
+                                        params['row_time'] = row['time']
+                                    conn.execute(sqlalchemy.text(f'UPDATE "{t}" SET ' + ', '.join([f'{k} = :{k}' for k in updates.keys()]) + f' WHERE {where_clause}'), params)
 
         self.peersTable = sqlalchemy.Table(
             dbName, self.metadata,
@@ -369,7 +406,19 @@ class WireguardConfiguration:
             extend_existing=True
         )
 
+        self.migrationsTable = sqlalchemy.Table(
+            'wgd_migrations', self.metadata,
+            sqlalchemy.Column('id', sqlalchemy.String(255), primary_key=True),
+            sqlalchemy.Column('applied_at', sqlalchemy.TIMESTAMP, server_default=sqlalchemy.func.now()),
+            extend_existing=True
+        )
+
         self.metadata.create_all(self.engine)
+
+        if not migration_applied:
+            with self.engine.begin() as conn:
+                conn.execute(self.migrationsTable.insert().values(id=migration_id))
+
 
     def __dumpDatabase(self):
         with self.engine.connect() as conn:
