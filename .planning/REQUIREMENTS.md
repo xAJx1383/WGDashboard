@@ -29,18 +29,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STAB-01 | Phase 1 | Completed |
-| STAB-02 | Phase 1 | Completed |
-| STAB-03 | Phase 1 | Completed |
-| STAB-04 | Phase 1 | Completed |
-| TRACK-01 | Phase 1 | Completed |
-| TRACK-02 | Phase 1 | Completed |
-| TRACK-03 | Phase 1 | Completed |
-| TRACK-04 | Phase 1 | Completed |
-| PANEL-01 | Phase 2 | Completed |
-| PANEL-02 | Phase 2 | Completed |
-| PANEL-03 | Phase 2 | Completed |
-| PANEL-04 | Phase 2 | Completed |
-| PANEL-05 | Phase 2 | Completed |
-| PANEL-06 | Phase 2 | Completed |
-| TRACK-05 | Phase 3 | Completed |
+| STAB-01 | Phase 1 | Pending |
+| STAB-02 | Phase 1 | Pending |
+| STAB-03 | Phase 1 | Pending |
+| STAB-04 | Phase 1 | Pending |
+| TRACK-01 | Phase 1 | Pending |
+| TRACK-02 | Phase 1 | Pending |
+| TRACK-03 | Phase 1 | Pending |
+| TRACK-04 | Phase 1 | Pending |
+| PANEL-01 | Phase 2 | Pending |
+| PANEL-02 | Phase 2 | Pending |
+| PANEL-03 | Phase 2 | Pending |
+| PANEL-04 | Phase 2 | Pending |
+| PANEL-05 | Phase 2 | Pending |
+| PANEL-06 | Phase 2 | Pending |
+| TRACK-05 | Phase 3 | Pending |
