@@ -75,6 +75,9 @@ def ResponseObject(status=True, message=None, data=None, status_code = 200) -> F
 Flask App
 '''
 app = Flask("WGDashboard", template_folder=os.path.abspath("./static/dist/WGDashboardAdmin"))
+peer_app = Flask("WGDashboardPeerPanel", 
+                 template_folder=os.path.abspath("./static/dist/WGDashboardPeerPanel"),
+                 static_folder=os.path.abspath("./static/dist/WGDashboardPeerPanel"))
 
 def peerInformationBackgroundThread():
     global WireguardConfigurations
@@ -171,11 +174,34 @@ def InitWireguardConfigurationsList(startup: bool = False, force: bool = False):
                 except WireguardConfiguration.InvalidConfigurationFileException as e:
                     app.logger.error(f"{i} have an invalid configuration file.")
 
+def startPeerPanelThread():
+    _, peer_panel_enable = DashboardConfig.GetConfig("PeerPanel", "peer_panel_enable")
+    if not peer_panel_enable:
+        return
+        
+    _, peer_panel_port = DashboardConfig.GetConfig("PeerPanel", "peer_panel_port")
+    _, main_app_port = DashboardConfig.GetConfig("Server", "app_port")
+    _, peer_panel_bind_address = DashboardConfig.GetConfig("PeerPanel", "peer_panel_bind_address")
+    
+    if str(peer_panel_port) != str(main_app_port):
+        def run_peer_app():
+            app.logger.info(f"Starting Peer Panel on {peer_panel_bind_address}:{peer_panel_port}")
+            # Ensure peer_app has necessary context
+            peer_app.config['WGD'] = WireguardConfigurations
+            peer_app.json = CustomJsonEncoder(peer_app)
+            if 'peer_panel' not in peer_app.blueprints:
+                peer_app.register_blueprint(peer_panel)
+            peer_app.run(host=peer_panel_bind_address, port=int(peer_panel_port), debug=False, use_reloader=False)
+            
+        peer_thread = threading.Thread(target=run_peer_app, daemon=True)
+        peer_thread.start()
+
 def startThreads():
     bgThread = threading.Thread(target=peerInformationBackgroundThread, daemon=True)
     bgThread.start()
     scheduleJobThread = threading.Thread(target=peerJobScheduleBackgroundThread, daemon=True)
     scheduleJobThread.start()
+    startPeerPanelThread()
 
 dictConfig({
     'version': 1,
@@ -241,7 +267,14 @@ with app.app_context():
     InitWireguardConfigurationsList(startup=True)
     DashboardClients: DashboardClients = DashboardClients(WireguardConfigurations)
     app.register_blueprint(createClientBlueprint(WireguardConfigurations, DashboardConfig, DashboardClients))
-    app.register_blueprint(peer_panel, url_prefix='/peer')
+    
+    # Task 2: Implement conditional Blueprint registration
+    _, peer_panel_enable = DashboardConfig.GetConfig("PeerPanel", "peer_panel_enable")
+    _, peer_panel_port = DashboardConfig.GetConfig("PeerPanel", "peer_panel_port")
+    _, main_app_port = DashboardConfig.GetConfig("Server", "app_port")
+    
+    if peer_panel_enable and str(peer_panel_port) == str(main_app_port):
+        app.register_blueprint(peer_panel, url_prefix='/peer')
 
 _, APP_PREFIX = DashboardConfig.GetConfig("Server", "app_prefix")
 cors = CORS(app, resources={rf"{APP_PREFIX}/api/*": {

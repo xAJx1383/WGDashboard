@@ -101,3 +101,38 @@ def test_usage_route():
         assert "peer1_pubkey" in html
         assert "1.0 KB" in html # 1024 bytes
         assert "2.0 KB" in html # 2048 bytes
+
+def test_secondary_port_service():
+    # Mocking necessary components to test startPeerPanelThread
+    from unittest.mock import patch, MagicMock
+    
+    # We need to mock DashboardConfig BEFORE importing dashboard because dashboard.py 
+    # executes code on import.
+    mock_config_inst = MagicMock()
+    def get_config_side_effect(section, key):
+        if section == "PeerPanel":
+            if key == "peer_panel_enable": return True, True
+            if key == "peer_panel_port": return True, "10087"
+            if key == "peer_panel_bind_address": return True, "127.0.0.1"
+        if section == "Server" and key == "app_port": return True, "10086"
+        if section == "Server" and key == "wg_conf_path": return True, "/tmp"
+        if section == "Server" and key == "awg_conf_path": return True, "/tmp"
+        return True, ""
+        
+    mock_config_inst.GetConfig.side_effect = get_config_side_effect
+    
+    with patch('modules.DashboardConfig.DashboardConfig', return_value=mock_config_inst), \
+         patch('threading.Thread') as mock_thread:
+        
+        if 'dashboard' in sys.modules:
+            del sys.modules['dashboard']
+        import dashboard
+        dashboard.DashboardConfig = mock_config_inst
+        
+        dashboard.startPeerPanelThread()
+        
+        # Ports are different (10087 vs 10086), so a thread should be started
+        assert mock_thread.called
+        # Check if the last thread started has daemon=True
+        args, kwargs = mock_thread.call_args
+        assert kwargs['daemon'] is True
