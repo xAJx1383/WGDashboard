@@ -91,6 +91,11 @@ class DashboardConfig:
             },
             "WireGuardConfiguration": {
                 "autostart": ""
+            },
+            "PeerPanel": {
+                "peer_panel_enable": "false",
+                "peer_panel_port": "10087",
+                "peer_panel_bind_address": "0.0.0.0"
             }
         }
 
