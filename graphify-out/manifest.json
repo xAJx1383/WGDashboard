@@ -1,0 +1,1006 @@
+{
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\client.py": {
+    "mtime": 1771434327.0,
+    "hash": "ad2aefac84a8fa25ed42872c6fe466b7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\dashboard.py": {
+    "mtime": 1778935020.888487,
+    "hash": "89cda94d0031a90a5095f2747cde803f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\gunicorn.conf.py": {
+    "mtime": 1771434327.0,
+    "hash": "208755722dd38f4b0919b77ddbc99a6b"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\peer_panel.py": {
+    "mtime": 1778934810.2437532,
+    "hash": "6e6da8c703250413b0215b64c5633b97"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\AmneziaWGPeer.py": {
+    "mtime": 1778923302.4943337,
+    "hash": "a3fc55b8b1f6a773f1b66421d59dca2c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\AmneziaWireguardConfiguration.py": {
+    "mtime": 1778924328.8479593,
+    "hash": "562ad17c74cfb39c0ae2da7d7fdc276c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\ConnectionString.py": {
+    "mtime": 1778235793.663137,
+    "hash": "cab05e1c594a23ad8bdcfa9b4aeed44a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardAPIKey.py": {
+    "mtime": 1771434327.0,
+    "hash": "28f2e9319bc051acbcc01740f0b71a6e"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardClients.py": {
+    "mtime": 1778095534.6501336,
+    "hash": "73481020c44afd786370aee01d115bf6"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardClientsPeerAssignment.py": {
+    "mtime": 1778095546.7338119,
+    "hash": "b8599a8da3375aecb80d88c59719f358"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardClientsTOTP.py": {
+    "mtime": 1778095553.239696,
+    "hash": "85f30bb87ecc2981dda090c3b228d697"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardConfig.py": {
+    "mtime": 1778934972.0849967,
+    "hash": "aa25dbf067b6be2cb2ef4559cf576f4e"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardLogger.py": {
+    "mtime": 1778095559.5966518,
+    "hash": "a2fca9fcd18c8b03904770ad801a0f6f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardOIDC.py": {
+    "mtime": 1778235767.2366471,
+    "hash": "fe3336f1db8dccfba8ee620f185e452c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardPlugins.py": {
+    "mtime": 1771434327.0,
+    "hash": "8f0de3bbef04759f7bedcdd74cd742a6"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\DashboardWebHooks.py": {
+    "mtime": 1778095575.0154898,
+    "hash": "1897ebdee931862a861c028ca0c004ad"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\Email.py": {
+    "mtime": 1778238461.5719557,
+    "hash": "dce46731d7174f1a3de402ea497cbcd7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\Log.py": {
+    "mtime": 1771434327.0,
+    "hash": "2c029f27a2c1758ee3d8a857be974e79"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\NewConfigurationTemplates.py": {
+    "mtime": 1778095619.600151,
+    "hash": "af1097e67881993b1704788344a426b1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\Peer.py": {
+    "mtime": 1778926354.2770627,
+    "hash": "b0c71c2a246088d354d9ba4493c60f4d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\PeerJob.py": {
+    "mtime": 1771434327.0,
+    "hash": "79a0a1187e527a033495013cb089b9ee"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\PeerJobLogger.py": {
+    "mtime": 1778240384.13302,
+    "hash": "1490e9a6b1ec179c568b59ecd9d37ebb"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\PeerJobs.py": {
+    "mtime": 1778593810.2563386,
+    "hash": "7f4aa5cd262cfbb4fdd052dd591fb0a6"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\PeerShareLink.py": {
+    "mtime": 1771434327.0,
+    "hash": "8dcdff42138de822115964ec49e400f7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\PeerShareLinks.py": {
+    "mtime": 1778095673.8144302,
+    "hash": "bd6c40c0a683b195a665d2a0c2ab7c8c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\SystemStatus.py": {
+    "mtime": 1778923317.0697136,
+    "hash": "cb966c8b2ce1b5baad4232924787f8ba"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\Utilities.py": {
+    "mtime": 1778925317.1238554,
+    "hash": "9e94ba24f8d449a82894d3db655b4eee"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\WireguardCLI.py": {
+    "mtime": 1778923285.8799787,
+    "hash": "d44b38c0cf41d41f98198253ee8696c7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\WireguardConfiguration.py": {
+    "mtime": 1778926365.630074,
+    "hash": "c6aac232f3c942a21b53b178163b9b03"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\modules\\WireguardConfigurationInfo.py": {
+    "mtime": 1771434327.0,
+    "hash": "8b0bdafc0e14b63e8aa8efb61b7e2a18"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\proxy.js": {
+    "mtime": 1771434327.0,
+    "hash": "8677eb2cc9cb6b405320f86d9883501f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\vite.config.js": {
+    "mtime": 1771434327.0,
+    "hash": "39bb5e9d77cf40ee1143ff1ecdb031d5"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\App.vue": {
+    "mtime": 1771434327.0,
+    "hash": "54d1e939c80e412d968e6ee778a6eb87"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\main.js": {
+    "mtime": 1771434327.0,
+    "hash": "9194b257e7efa639c72a8f663d015359"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationList.vue": {
+    "mtime": 1771434327.0,
+    "hash": "eae64852e4f926c93f545964cf55fd8d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\navbar.vue": {
+    "mtime": 1771434327.0,
+    "hash": "c0b5a9ec04ace34613a5210c8a536a69"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\protocolBadge.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a9ecc9a2ddc6ce3994fed3e7e6db23b7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\availablePeersGroup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "17fd935b0a477d11bd281b49ea5cf269"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\clientAssignedPeers.vue": {
+    "mtime": 1771434327.0,
+    "hash": "e8cec3b6df952a2f125e72917bed2974"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\clientDelete.vue": {
+    "mtime": 1771434327.0,
+    "hash": "678a8720bafc02b7f9e5221aefcfe8ac"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\clientGroup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f27e5d0b2abefc393ee774f59b4b0d3b"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\clientProfile.vue": {
+    "mtime": 1771434327.0,
+    "hash": "def0e414e008c6d3a1143903b917b6d2"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\clientSettings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "8d2a700837feebd1f9a9eb1453e0a185"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\clientViewer.vue": {
+    "mtime": 1771434327.0,
+    "hash": "00b9ddde99cabfd16dd967c47147611f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\clientComponents\\clientSettingComponents\\oidcSettings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "54d3f66fbfc534c6aa1ec8c25221d47c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\configurationBackupRestore.vue": {
+    "mtime": 1771434327.0,
+    "hash": "5bcea92749f99defe0d585efdc66cac0"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\configurationDescription.vue": {
+    "mtime": 1771434327.0,
+    "hash": "3b93e3b691a414af16dfae468968bd5f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\deleteConfiguration.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a8a719bd55ade8c9d85ce8cb802432dd"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\editConfiguration.vue": {
+    "mtime": 1771434327.0,
+    "hash": "fef932ef4070c1993e12016035d5921e"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peer.vue": {
+    "mtime": 1778936375.3830957,
+    "hash": "7bfec308ce82263f5c391b8a35b9a1cf"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerAddModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "5e21325f65c2c601d56b09d26f614ff8"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerAssignModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "464c5bf5318f4547b246734b3015a9ff"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerConfigurationFile.vue": {
+    "mtime": 1771434327.0,
+    "hash": "814795dd87bd7848fa58f5e23f50e6b4"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerCreate.vue": {
+    "mtime": 1771434327.0,
+    "hash": "13ba6ba1637353677ef5a1c5dbcb29d5"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerDetailsModal.vue": {
+    "mtime": 1778936253.7862031,
+    "hash": "5c02fa8391a3a8f936062f1fc4d2c8d1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerIntersectionObserver.vue": {
+    "mtime": 1771434327.0,
+    "hash": "1195b82b3eb343b6d16be08a682f9597"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerJobs.vue": {
+    "mtime": 1771434327.0,
+    "hash": "b0e8998693ef1534e2c700b48fb5deb5"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerJobsAllModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "13d424d2de255f14ffddd86047eda723"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerJobsLogsModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a016b509b736143c370a991e6ff0ef29"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerList.old.vue": {
+    "mtime": 1771434327.0,
+    "hash": "881424112743e677ffa62a4ba5dbe108"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerList.vue": {
+    "mtime": 1778936585.0306733,
+    "hash": "f95e33696b2363df5bf3fd8f5c2725c7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerQRCode.vue": {
+    "mtime": 1771434327.0,
+    "hash": "e9dd144211adb5e618fb0a886ef4dcb7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerRow.vue": {
+    "mtime": 1778936244.373115,
+    "hash": "e1f683691d856fdc6142efc8d4423225"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerSearch.vue": {
+    "mtime": 1771434327.0,
+    "hash": "1561f2f1946dab9ce59444fa0b7b49e9"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerSearchBar.vue": {
+    "mtime": 1771434327.0,
+    "hash": "679bbcc529151fa1ec69acf7c55a9378"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerSettings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "59693047e91691f0683a0c03fddd8c91"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerSettingsDropdown.vue": {
+    "mtime": 1771434327.0,
+    "hash": "0eba1b9cd5592d13b580c4adffb15d82"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerShareLinkModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "c3ec5c3eaf7874b7cdb8389c0f85f686"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerTag.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a556185865a418b6bd45157ebb414e5f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerTagBadge.vue": {
+    "mtime": 1771434327.0,
+    "hash": "2e4ba534fbabc7f0a36759eac2cb4b69"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\restrictedPeers.vue": {
+    "mtime": 1771434327.0,
+    "hash": "9f2d935679393341269ab8d3ff370277"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\selectPeers.vue": {
+    "mtime": 1771434327.0,
+    "hash": "fbddc5f7712f7179ae2373670e048dd1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\backupRestoreComponents\\backup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "d5dd8afdda86cdee0dd3c7fce1a01a66"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\editConfigurationComponents\\editPeerSettingsOverride.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a9933b73e863038341b034f9c04dc425"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\editConfigurationComponents\\editRawConfigurationFile.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f73b851bf2a21e90da9ed2d1f5c80536"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\editConfigurationComponents\\updateConfigurationName.vue": {
+    "mtime": 1771434327.0,
+    "hash": "4cb6741e85fc047d27da05b59b26f9aa"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\allowedIPsInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "205d84b7f1c6fb2bdffd7e675be27e81"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\bulkAdd.vue": {
+    "mtime": 1771434327.0,
+    "hash": "e591df1743a8aee5af027cc0e9018f9a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\dnsInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a8c8c01fe481b9c0eb38c0c7505d3364"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\endpointAllowedIps.vue": {
+    "mtime": 1771434327.0,
+    "hash": "2348a851eb7303ebca4aaf3fea1ed37c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\mtuInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "5b4396c72f75556dc3d4932fc2d74206"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\nameInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "6dcd79114028b748cabfca9efeb29fe3"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\persistentKeepAliveInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "724c8e31744a26d58ddb7b19f9fe4445"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\presharedKeyInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "d6f5d2d2569cf4b48516039625f4499a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\newPeersComponents\\privatePublicKeyInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "029165f0e400aec374a23e56a5840453"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerAssignModalComponents\\assignedClients.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f8690114095c87b6a010649f25fa6557"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerAssignModalComponents\\assignment.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a4401bc2b476a7a11d7031e9c8fb5010"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerAssignModalComponents\\searchClients.vue": {
+    "mtime": 1771434327.0,
+    "hash": "72fd4452bca6871b9465eeb75865d547"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerAssignModalComponents\\searchClientsGroup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "41891f88615e000bd56e9c1582f8762b"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerListComponents\\peerDataUsageCharts.vue": {
+    "mtime": 1778936578.9723642,
+    "hash": "71286b03ac5c5374818275b0a84d1c9f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerListComponents\\peerListModals.vue": {
+    "mtime": 1771434327.0,
+    "hash": "5459824bc16ce66b6cfc840ce93cf559"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerScheduleJobsComponents\\scheduleDropdown.vue": {
+    "mtime": 1771434327.0,
+    "hash": "43c415e2a7631512fa226f1ceadb9636"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerScheduleJobsComponents\\schedulePeerJob.vue": {
+    "mtime": 1771434327.0,
+    "hash": "d7d6da839641390f637fe08ae2488ed9"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerSettingsDropdownComponents\\peerSettingsDropdownTool.vue": {
+    "mtime": 1771434327.0,
+    "hash": "6e651ac9e923cb4a48c9ae531ed9e70a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerSettingsDropdownComponents\\peerTagSelectDropdown.vue": {
+    "mtime": 1771434327.0,
+    "hash": "6e15382d7db5d860ac0e080ee25afd69"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerShareLinkComponents\\peerShareWithEmail.vue": {
+    "mtime": 1771434327.0,
+    "hash": "bb8caed85f36929327dd119cb6482294"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerShareLinkComponents\\peerShareWithEmailBodyPreview.vue": {
+    "mtime": 1771434327.0,
+    "hash": "7da2c90bbc8efabe7ed48730fa217c05"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerTagComponents\\peerTagColorPicker.vue": {
+    "mtime": 1771434327.0,
+    "hash": "8fed2011c01f05a7577dbc08d343a144"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerTagComponents\\peerTagIconPicker.vue": {
+    "mtime": 1771434327.0,
+    "hash": "814ee8d72131e75256c5040b866fd4bf"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationComponents\\peerTagComponents\\peerTagSetting.vue": {
+    "mtime": 1771434327.0,
+    "hash": "4f77405db6c4adba8464fffa1bcd3187"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\configurationListComponents\\configurationCard.vue": {
+    "mtime": 1778936324.1666098,
+    "hash": "316d2d5035a604a2abb70793097d4ab0"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\map\\osmap.vue": {
+    "mtime": 1771434327.0,
+    "hash": "3883df930fe99b7fbe08c9b67d2eca70"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\messageCentreComponent\\message.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f9d4e3ecb0f33767d7daeb05aec4a3f9"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\navbarComponents\\agentContainer.vue": {
+    "mtime": 1771434327.0,
+    "hash": "db215ab3f2d69d276cebce32d93368a0"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\navbarComponents\\agentMessage.vue": {
+    "mtime": 1771434327.0,
+    "hash": "94faea56e97bd8547d77c69b568235ad"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\navbarComponents\\agentModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "3e3705ca391bae71b9449caf1f8f103b"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\navbarComponents\\helpModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "8a6cfa7368be2d241a705a27e7f6cd1a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\newConfigurationComponents\\newConfigurationTemplate.vue": {
+    "mtime": 1771434327.0,
+    "hash": "08c74e12fa1ff6efc54008cfc329680f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\newConfigurationComponents\\newConfigurationTemplates.vue": {
+    "mtime": 1771434327.0,
+    "hash": "8648a1f5f3d11ee5454a747ba1158b3d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\peerDetailsModalComponents\\peerEndpoints.vue": {
+    "mtime": 1771434327.0,
+    "hash": "d82d991b1ff0261bb7c4da4685165d88"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\peerDetailsModalComponents\\peerSession.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a87cc62469f516382fce8bd694cc160c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\peerDetailsModalComponents\\peerSessionCalendarDay.vue": {
+    "mtime": 1771434327.0,
+    "hash": "3e34c4507ad7df6b6ace91707f31ef46"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\peerDetailsModalComponents\\peerSessionCalendarView.vue": {
+    "mtime": 1771434327.0,
+    "hash": "569fc2b43341dd63a6bd2ccba7f64c01"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\peerDetailsModalComponents\\peerSessions.vue": {
+    "mtime": 1771434327.0,
+    "hash": "92928acc7495c058c73a2ad55965a23b"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\peerDetailsModalComponents\\peerTraffics.vue": {
+    "mtime": 1771434327.0,
+    "hash": "cc625267ea42aaa4d5083e123b3e8651"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\restoreConfigurationComponents\\backupGroup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "1cbdd266dbedbfad918100f08e090f95"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\restoreConfigurationComponents\\confirmBackup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "cb8409ace5076990f96c72e40a4bfdfe"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\restoreConfigurationComponents\\uploadModal.vue": {
+    "mtime": 1771434327.0,
+    "hash": "430184f37cd0cfd2dc908f7625b58245"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\accountSettingsInputUsername.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f6f84a3a0c229d977039143733b5d3e8"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\accountSettingsMFA.vue": {
+    "mtime": 1771434327.0,
+    "hash": "9aa007dd008a8c75009f8ea42d116c17"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardAPIKeys.vue": {
+    "mtime": 1771434327.0,
+    "hash": "0009345b0f385872eb392c26be02a811"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardEmailSettings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a2548a8ff915b821820b1e6315c47152"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardIPPortInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "583b34d0a3f1780e0a28e67fac2845ef"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardLanguage.vue": {
+    "mtime": 1771434327.0,
+    "hash": "b345de3d1ecc60c05a7c2520409e9cd8"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardSettingsInputIPAddressAndPort.vue": {
+    "mtime": 1771434327.0,
+    "hash": "20cc41c6905875cca5a541e8fae93376"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardSettingsInputWireguardConfigurationPath.vue": {
+    "mtime": 1771434327.0,
+    "hash": "e2cf1283af122fdd6981f3117d684bfc"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardSettingsWireguardConfigurationAutostart.vue": {
+    "mtime": 1771434327.0,
+    "hash": "d7b3acfe10710e06c7ead4b5d4b55a8f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardTheme.vue": {
+    "mtime": 1771434327.0,
+    "hash": "32e138f5363b872d40b9e4bdf70c0014"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardWebHooks.vue": {
+    "mtime": 1771434327.0,
+    "hash": "5e259c327f1714a76948fee63b99f686"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardWireguardConfigurationTracking.vue": {
+    "mtime": 1771434327.0,
+    "hash": "bccb9d4314d1062d7090cf7910422b26"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\peerDefaultSettings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "da1df5c950843481bf2bb66398a29986"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\peersDefaultSettingsInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f683f46572721356befc8ee0d8313c01"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\wgdashboardSettings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "fdc798367f04e725466abd3e11a754b4"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\wireguardConfigurationSettings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a83d72b049b37da8bde9553d732a07e6"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardAPIKeysComponents\\dashboardAPIKey.vue": {
+    "mtime": 1771434327.0,
+    "hash": "9b85a22d77becd4e77dd9df8253f14af"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardAPIKeysComponents\\newDashboardAPIKey.vue": {
+    "mtime": 1771434327.0,
+    "hash": "375d4b08948419a0d8c83c7044b5008c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardWebHooksComponents\\addWebHook.vue": {
+    "mtime": 1771434327.0,
+    "hash": "bd2fcf0e7326a5ea1f0be2cc977e937e"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardWebHooksComponents\\previousWebHookSession.vue": {
+    "mtime": 1771434327.0,
+    "hash": "befc5d0832c778f55a617a11426e5502"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardWebHooksComponents\\webHookSession.vue": {
+    "mtime": 1771434327.0,
+    "hash": "145fa2f608e193a82dda6fc2c8fd8c59"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardWebHooksComponents\\webHookSessions.vue": {
+    "mtime": 1771434327.0,
+    "hash": "9ab8443905b56acd3d7cc531fdd5867c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\settingsComponent\\dashboardWireguardConfigurationTrackingComponents\\configurationTracking.vue": {
+    "mtime": 1771434327.0,
+    "hash": "2138afe301a778fdcf0b35afbe4c294e"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\setupComponent\\totp.vue": {
+    "mtime": 1771434327.0,
+    "hash": "3f40dd98e386646112505b90241a5ee5"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\signIn\\signInInput.vue": {
+    "mtime": 1771434327.0,
+    "hash": "08d2240f7a96ccb02d679d507d3476e6"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\signIn\\signInTOTP.vue": {
+    "mtime": 1771434327.0,
+    "hash": "58f1c1b454a646f88c529cd77b659d66"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\signInComponents\\RemoteServer.vue": {
+    "mtime": 1771434327.0,
+    "hash": "c5c4bf7de4c3ed81d8c1d7ae28dbe877"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\signInComponents\\RemoteServerList.vue": {
+    "mtime": 1771434327.0,
+    "hash": "88acd31f73043e804df63b8ebdf945eb"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\systemStatusComponents\\cpuCore.vue": {
+    "mtime": 1771434327.0,
+    "hash": "be5a682bdb7107ff69be83130e1cc546"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\systemStatusComponents\\networkInterface.vue": {
+    "mtime": 1775982450.4786355,
+    "hash": "7c0e0495ba29df40480d2926670deff2"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\systemStatusComponents\\process.vue": {
+    "mtime": 1775982406.571907,
+    "hash": "e9fcaebccbc4c65cb03ad9507784cc1f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\systemStatusComponents\\storageMount.vue": {
+    "mtime": 1771434327.0,
+    "hash": "405bdc4cdb735a604535f2512e0d77e9"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\systemStatusComponents\\systemStatusWidget.vue": {
+    "mtime": 1775980427.748333,
+    "hash": "009af226b292ef9ab3fd1d1f708f2c43"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\components\\text\\localeText.vue": {
+    "mtime": 1771434327.0,
+    "hash": "5adec53e1e03eebf9f2160b0e0d6b14a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\models\\WireguardConfigurations.js": {
+    "mtime": 1771434327.0,
+    "hash": "85f6819403fc8e1ededb71eb9b2a94fd"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\router\\router.js": {
+    "mtime": 1771434327.0,
+    "hash": "9cdb74c55e1e4ad60262336025222335"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\stores\\DashboardClientAssignmentStore.js": {
+    "mtime": 1771434327.0,
+    "hash": "e12edb6c526a911be897ea039d8333b8"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\stores\\DashboardConfigurationStore.js": {
+    "mtime": 1771434327.0,
+    "hash": "e3be793d567f70d7c928e7081ba600b1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\stores\\WireguardConfigurationsStore.js": {
+    "mtime": 1771434327.0,
+    "hash": "731b2d0f57b18e433cdee80d2e8c5457"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\utilities\\cookie.js": {
+    "mtime": 1771434327.0,
+    "hash": "8e373f2ac2f37af57e8ebd3b0ab46ac1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\utilities\\fetch.js": {
+    "mtime": 1775982263.1351106,
+    "hash": "ad7957830ae7f913440816390a72a350"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\utilities\\locale.js": {
+    "mtime": 1771434327.0,
+    "hash": "7a683289f67656c901a7faa3a162533d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\utilities\\parseConfigurationFile.js": {
+    "mtime": 1771434327.0,
+    "hash": "acab3bed81526a129703c576c6052d2e"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\utilities\\wireguard.js": {
+    "mtime": 1778936204.357418,
+    "hash": "fb10c01029bbdcfc87b11f274500d76c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\utilities\\simple-code-editor\\CodeEditor.vue": {
+    "mtime": 1771434327.0,
+    "hash": "d762c8a9316480dd9fbccc604ffd3786"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\utilities\\simple-code-editor\\Dropdown.vue": {
+    "mtime": 1771434327.0,
+    "hash": "8ae8de04150e31e0d610a1f12fab8f18"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\clients.vue": {
+    "mtime": 1771434327.0,
+    "hash": "32730c1f2efc788a5fd1a25bb74833b1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\configuration.vue": {
+    "mtime": 1771434327.0,
+    "hash": "cb14e259e81ef66e0791a09bc2ca71d9"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\index.vue": {
+    "mtime": 1771434327.0,
+    "hash": "96f685c03c8b05cc87bfc5926f5f8f90"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\newConfiguration.vue": {
+    "mtime": 1771434327.0,
+    "hash": "8b051b313c74f7ae1bf656c73ec17397"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\ping.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a89ddabd29e5ffef2734c38be2bf0c23"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\restoreConfiguration.vue": {
+    "mtime": 1771434327.0,
+    "hash": "b071d5e98db4f9644fcf9a3baa35cfe4"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\settings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "4dfd3233975a6fa675be55c1079a8f7d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\setup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "14ffbebb225ff7c47a488aa3d7e17edf"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\share.vue": {
+    "mtime": 1771434327.0,
+    "hash": "c21bb824c7279ea98144f216a2595335"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\signin.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f12210ef5c55707a2ea25f8d157260b6"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\systemStatus.vue": {
+    "mtime": 1775982518.17696,
+    "hash": "f9dcecec6b9ba42feb50c7e9949d28d4"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\src\\views\\traceroute.vue": {
+    "mtime": 1771434327.0,
+    "hash": "e42c29ae79cd956ad0168fa3f8a663a8"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\proxy.js": {
+    "mtime": 1771434327.0,
+    "hash": "8677eb2cc9cb6b405320f86d9883501f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\vite.config.js": {
+    "mtime": 1771434327.0,
+    "hash": "481584fdccf9f0f41708b22a32156164"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\App.vue": {
+    "mtime": 1771434327.0,
+    "hash": "0d47b87650d33691a07124bdaadf6680"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\main.js": {
+    "mtime": 1771434327.0,
+    "hash": "bd7b1b8ffb79948a46215b25f9d286dc"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\Configuration\\configuration.vue": {
+    "mtime": 1771434327.0,
+    "hash": "caebc9fdb86a87b06c47d3b6e6ce621f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\Configuration\\configurationQRCode.vue": {
+    "mtime": 1771434327.0,
+    "hash": "29af844169f55bc53c12ca60604a6554"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\Notification\\notification.vue": {
+    "mtime": 1771434327.0,
+    "hash": "4f735a357707f2c648267b9aa5d5af62"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\Notification\\notificationList.vue": {
+    "mtime": 1771434327.0,
+    "hash": "3532f548fc0a15aee487b168485e21b7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\Settings\\profile.vue": {
+    "mtime": 1771434327.0,
+    "hash": "ceab2a6faf92e0d61c546daa88982feb"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\SignIn\\qrcode.vue": {
+    "mtime": 1771434327.0,
+    "hash": "572e7d453900baf11955ec5e925cc73c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\SignIn\\signInForm.vue": {
+    "mtime": 1771434327.0,
+    "hash": "547bf37bbb2621a1ce789530ca22174f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\SignIn\\totpForm.vue": {
+    "mtime": 1771434327.0,
+    "hash": "f0ce495f936d9765191b6d4dc74f776f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\SignIn\\oidc\\oidc.vue": {
+    "mtime": 1771434327.0,
+    "hash": "a517a6fbdbab687b0b1fb71672769c26"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\components\\SignIn\\oidc\\oidcBtn.vue": {
+    "mtime": 1771434327.0,
+    "hash": "03403e77f4ac45ee23505741fa080661"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\router\\router.js": {
+    "mtime": 1771434327.0,
+    "hash": "474db67636740ed2dfb898fec6d02658"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\stores\\clientStore.js": {
+    "mtime": 1771434327.0,
+    "hash": "91c4ca672b7569fb9399d4434852fd0d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\utilities\\request.js": {
+    "mtime": 1771434327.0,
+    "hash": "62ceafe4cf410c2ff4bffaa88b041add"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\views\\index.vue": {
+    "mtime": 1771434327.0,
+    "hash": "9ed42bce696530ef92157752858473b6"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\views\\settings.vue": {
+    "mtime": 1771434327.0,
+    "hash": "068fa465707bd3386ced8335ea8e1319"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\views\\signin.vue": {
+    "mtime": 1771434327.0,
+    "hash": "54d5a396c6d079fc6810f52bd8e4953c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\views\\signup.vue": {
+    "mtime": 1771434327.0,
+    "hash": "b3940c2a7876aecd13ab44cdc6f1539b"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\locales\\locale_manager.py": {
+    "mtime": 1771434327.0,
+    "hash": "d403ac75431228570b9885d92536b4d1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\tests\\stress_test_peers.py": {
+    "mtime": 1778936551.1782887,
+    "hash": "895742341075db8778f103133ccc7076"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\tests\\test_cli_locking.py": {
+    "mtime": 1778923532.5526338,
+    "hash": "ff579704f87814ef9d08191613d19ea7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\tests\\test_delta_pattern.py": {
+    "mtime": 1778926544.407783,
+    "hash": "9805f45d9c2a1daa619045f08e5af250"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\tests\\test_peer_panel.py": {
+    "mtime": 1778935062.9427254,
+    "hash": "691d6b4cc3732f5bedffc572cf9c7f8b"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\tests\\test_stab_track.py": {
+    "mtime": 1778926570.4361894,
+    "hash": "b74ad8c9620b8a4df4c6e60dbe4dde8e"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\README.md": {
+    "mtime": 1771434327.0,
+    "hash": "bc8cd005f4aca827b7798e554f11cb45"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\SECURITY.md": {
+    "mtime": 1771434327.0,
+    "hash": "949d69fc612deefef4a8dea4dfb079ab"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\docker\\compose.yaml": {
+    "mtime": 1771434327.0,
+    "hash": "c7e4e616ae44ca7280a599eb74a6510c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\docker\\README.md": {
+    "mtime": 1771434327.0,
+    "hash": "44fa371f069d4b6ae96da6c4c54adeac"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\plans\\robust-data-management.md": {
+    "mtime": 1778240357.2173865,
+    "hash": "79a19244145ba9e03b75086b1d238665"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\requirements.txt": {
+    "mtime": 1771434327.0,
+    "hash": "1dbd2e24f33de11abda7e35adc01318a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\index.html": {
+    "mtime": 1771434327.0,
+    "hash": "1dd4c018a1f59ce7bb7ce2b456ac7805"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\index.html": {
+    "mtime": 1771434327.0,
+    "hash": "4a36ebef9fcaa2627516f6c4389a9d49"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\README.md": {
+    "mtime": 1771434327.0,
+    "hash": "2890486223d6764c2ae0e5096dbd2a12"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\assets\\fonts\\Plus_Jakarta_Sans\\OFL.txt": {
+    "mtime": 1771434327.0,
+    "hash": "b0b4f1ac2b0bc78549f5b1dd9946abf1"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\assets\\fonts\\Plus_Jakarta_Sans\\README.txt": {
+    "mtime": 1771434327.0,
+    "hash": "88886777cbecf1edad4cdd3bdf911358"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "7b98c84f2ae998387f2a2d5c5d3de94d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "3da0aeea87cdb72899f9bd7f03170b80"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "31f66281c5d1ba2359be4205bc259575"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "659446a357141ec97a1e1555ddd68d1a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-Maskable-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "10d0621f2bc6a686407b2f03afbf966a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-Rounded-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "6fa36a260491083eb710771c96c044ac"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-Rounded-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "7513d5b26521f04537ae66906f4e9548"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-Rounded-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "37382483cb739f5411ac9f4b44f097fa"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-1-Rounded-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "30ea3b4462db4e037bf49aaf1c862272"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "52d6f8246a59b2df21e402ad77328cb7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "53c3da4591cbf6d85291e98180b34b6c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "04931d524991d5d9b7aaf48fb8def49d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "d800920e60ca28a41308c2580006bab5"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-Rounded-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "13db993a6acdb6e4eb99e9382cb2d712"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-Rounded-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "7d4be46a9916502b54777ae920cbc3e3"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-Rounded-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "95ae6a11e1b009a6412cccee75c2a020"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\app\\public\\img\\Logo-2-Rounded-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "0e1bd33b2855b06e03f3bc2f1e7f7248"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\fabrizio-conti-aExT3y92x5o-unsplash.jpg": {
+    "mtime": 1771434327.0,
+    "hash": "b1425f88851da8efb801305368d4957f"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\lachlan-gowen-0s0WCiys0ZI-unsplash.jpg": {
+    "mtime": 1771434327.0,
+    "hash": "b75ba747a0dc65a814203a3326a7b8b5"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "7b98c84f2ae998387f2a2d5c5d3de94d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "3da0aeea87cdb72899f9bd7f03170b80"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "31f66281c5d1ba2359be4205bc259575"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "659446a357141ec97a1e1555ddd68d1a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-Maskable-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "10d0621f2bc6a686407b2f03afbf966a"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-Rounded-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "6fa36a260491083eb710771c96c044ac"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-Rounded-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "7513d5b26521f04537ae66906f4e9548"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-Rounded-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "37382483cb739f5411ac9f4b44f097fa"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-1-Rounded-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "30ea3b4462db4e037bf49aaf1c862272"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "52d6f8246a59b2df21e402ad77328cb7"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "53c3da4591cbf6d85291e98180b34b6c"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "04931d524991d5d9b7aaf48fb8def49d"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "d800920e60ca28a41308c2580006bab5"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-Rounded-128x128.png": {
+    "mtime": 1771434327.0,
+    "hash": "13db993a6acdb6e4eb99e9382cb2d712"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-Rounded-256x256.png": {
+    "mtime": 1771434327.0,
+    "hash": "7d4be46a9916502b54777ae920cbc3e3"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-Rounded-384x384.png": {
+    "mtime": 1771434327.0,
+    "hash": "95ae6a11e1b009a6412cccee75c2a020"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\public\\img\\Logo-2-Rounded-512x512.png": {
+    "mtime": 1771434327.0,
+    "hash": "0e1bd33b2855b06e03f3bc2f1e7f7248"
+  },
+  "D:\\Programming\\wgdashboard_hardened.tar\\WGDashboard\\src\\static\\client\\src\\assets\\images\\bg1.jpg": {
+    "mtime": 1771434327.0,
+    "hash": "b3d371ca5cd15135db2ad9657b3876fe"
+  }
+}

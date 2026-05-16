@@ -1,0 +1,12 @@
+{
+  "workflow": "gsd-new-project",
+  "preferences": {
+    "research": true,
+    "requirements": true,
+    "roadmap": true
+  },
+  "initialized_at": "2025-05-16T09:10:00Z",
+  "graphify": {
+    "enabled": true
+  }
+}

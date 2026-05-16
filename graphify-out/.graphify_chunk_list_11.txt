@@ -1,0 +1,2 @@
+D:\Programming\wgdashboard_hardened.tar\WGDashboard\src\static\client\public\img\Logo-2-Rounded-512x512.png
+D:\Programming\wgdashboard_hardened.tar\WGDashboard\src\static\client\src\assets\images\bg1.jpg

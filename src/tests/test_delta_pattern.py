@@ -60,7 +60,7 @@ def test_counter_reset_integer():
     assert updates["cumu_sent"] == (5 + 30) * 1024**3
     assert updates["cumu_data"] == (60 + 35) * 1024**3
 
-from src.modules.Utilities import FormatBytes
+from modules.Utilities import FormatBytes
 
 def test_format_bytes():
     assert FormatBytes(0) == "0 B"
