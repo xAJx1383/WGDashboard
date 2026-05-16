@@ -17,9 +17,9 @@
   3. Database stores cumulative usage in BigInteger format without overflow or precision loss.
   4. Background WireGuard interactions are protected by a thread lock.
 **Plans**:
-- [ ] 01-01-PLAN.md — Concurrency & Storage Foundation
+- [ ] 01-01-PLAN.md — Stabilization Foundation & Test Scaffolding
 - [ ] 01-02-PLAN.md — High-Precision Tracking Overhaul
-- [ ] 01-03-PLAN.md — Atomic Operations & Lifecycle
+- [ ] 01-03-PLAN.md — Atomic Management & Graceful Shutdown
 
 ### Phase 2: Restricted Peer Usage Panel
 **Goal**: Provide peers with a secure, zero-login view of their own connection metrics.
