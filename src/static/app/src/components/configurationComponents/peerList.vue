@@ -14,6 +14,7 @@ import PeerIntersectionObserver from "@/components/configurationComponents/peerI
 import ConfigurationDescription from "@/components/configurationComponents/configurationDescription.vue";
 import PeerDetailsModal from "@/components/configurationComponents/peerDetailsModal.vue";
 import {parseCidr} from "cidr-tools";
+import {formatBytes} from "@/utilities/wireguard.js";
 
 // Async Components
 const PeerSearchBar = defineAsyncComponent(() => import("@/components/configurationComponents/peerSearchBar.vue"))
@@ -148,13 +149,13 @@ const configurationSummary = computed(() => {
 		connectedPeers: configurationPeers.value.filter(x => x.status === "running").length,
 		totalUsage: configurationPeers.value.length > 0 ?
 			configurationPeers.value.filter(x => !x.restricted)
-				.map(x => x.total_data + x.cumu_data).reduce((a, b) => a + b, 0).toFixed(4) : 0,
+				.map(x => x.total_data + x.cumu_data).reduce((a, b) => a + b, 0) : 0,
 		totalReceive: configurationPeers.value.length > 0 ?
 			configurationPeers.value.filter(x => !x.restricted)
-				.map(x => x.total_receive + x.cumu_receive).reduce((a, b) => a + b, 0).toFixed(4) : 0,
+				.map(x => x.total_receive + x.cumu_receive).reduce((a, b) => a + b, 0) : 0,
 		totalSent: configurationPeers.value.length > 0 ?
 			configurationPeers.value.filter(x => !x.restricted)
-				.map(x => x.total_sent + x.cumu_sent).reduce((a, b) => a + b, 0).toFixed(4) : 0
+				.map(x => x.total_sent + x.cumu_sent).reduce((a, b) => a + b, 0) : 0
 	}
 })
 
@@ -359,7 +360,7 @@ watch(() => route.query.id, (newValue) => {
 						<p class="mb-0 text-muted"><small>
 							<LocaleText t="Total Usage"></LocaleText>
 						</small></p>
-						<strong class="h4">{{configurationSummary.totalUsage}} GB</strong>
+						<strong class="h4">{{formatBytes(configurationSummary.totalUsage)}}</strong>
 					</div>
 					<i class="bi bi-arrow-down-up ms-auto h2 text-muted"></i>
 				</div>
@@ -372,7 +373,7 @@ watch(() => route.query.id, (newValue) => {
 						<p class="mb-0 text-muted"><small>
 							<LocaleText t="Total Received"></LocaleText>
 						</small></p>
-						<strong class="h4 text-primary">{{configurationSummary.totalReceive}} GB</strong>
+						<strong class="h4 text-primary">{{formatBytes(configurationSummary.totalReceive)}}</strong>
 					</div>
 					<i class="bi bi-arrow-down ms-auto h2 text-muted"></i>
 				</div>
@@ -385,7 +386,7 @@ watch(() => route.query.id, (newValue) => {
 						<p class="mb-0 text-muted"><small>
 							<LocaleText t="Total Sent"></LocaleText>
 						</small></p>
-						<strong class="h4 text-success">{{configurationSummary.totalSent}} GB</strong>
+						<strong class="h4 text-success">{{formatBytes(configurationSummary.totalSent)}}</strong>
 					</div>
 					<i class="bi bi-arrow-up ms-auto h2 text-muted"></i>
 				</div>

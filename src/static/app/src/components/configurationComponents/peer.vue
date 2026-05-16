@@ -7,10 +7,11 @@ import LocaleText from "@/components/text/localeText.vue";
 import {DashboardConfigurationStore} from "@/stores/DashboardConfigurationStore.js";
 import {GetLocale} from "@/utilities/locale.js";
 import PeerTagBadge from "@/components/configurationComponents/peerTagBadge.vue";
+import {formatBytes} from "@/utilities/wireguard.js";
 
 export default {
 	name: "peer",
-	methods: {GetLocale},
+	methods: {GetLocale, formatBytes},
 	components: {
 		PeerTagBadge, LocaleText, PeerSettingsDropdown
 	},
@@ -61,11 +62,11 @@ export default {
 				<div style="font-size: 0.8rem" class="ms-auto d-flex gap-2">
 					<span class="text-primary">
 						<i class="bi bi-arrow-down"></i><strong>
-						{{(Peer.cumu_receive + Peer.total_receive).toFixed(4)}}</strong> GB
+						{{formatBytes(Peer.cumu_receive + Peer.total_receive)}}</strong>
 					</span>
 					<span class="text-success">
 						<i class="bi bi-arrow-up"></i><strong>
-						{{(Peer.cumu_sent + Peer.total_sent).toFixed(4)}}</strong> GB
+						{{formatBytes(Peer.cumu_sent + Peer.total_sent)}}</strong>
 					</span>
 					<span class="text-secondary" v-if="Peer.latest_handshake !== 'No Handshake'">
 						<i class="bi bi-arrows-angle-contract"></i>
