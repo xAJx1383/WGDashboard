@@ -145,17 +145,25 @@ const toggleConfiguration = async () => {
 
 // Configuration Summary =====================================
 const configurationSummary = computed(() => {
+	let connectedPeers = 0;
+	let totalUsage = 0;
+	let totalReceive = 0;
+	let totalSent = 0;
+	
+	configurationPeers.value.forEach(x => {
+		if (x.status === "running") connectedPeers++;
+		if (!x.restricted) {
+			totalUsage += (x.total_data + x.cumu_data);
+			totalReceive += (x.total_receive + x.cumu_receive);
+			totalSent += (x.total_sent + x.cumu_sent);
+		}
+	});
+
 	return {
-		connectedPeers: configurationPeers.value.filter(x => x.status === "running").length,
-		totalUsage: configurationPeers.value.length > 0 ?
-			configurationPeers.value.filter(x => !x.restricted)
-				.map(x => x.total_data + x.cumu_data).reduce((a, b) => a + b, 0) : 0,
-		totalReceive: configurationPeers.value.length > 0 ?
-			configurationPeers.value.filter(x => !x.restricted)
-				.map(x => x.total_receive + x.cumu_receive).reduce((a, b) => a + b, 0) : 0,
-		totalSent: configurationPeers.value.length > 0 ?
-			configurationPeers.value.filter(x => !x.restricted)
-				.map(x => x.total_sent + x.cumu_sent).reduce((a, b) => a + b, 0) : 0
+		connectedPeers,
+		totalUsage,
+		totalReceive,
+		totalSent
 	}
 })
 

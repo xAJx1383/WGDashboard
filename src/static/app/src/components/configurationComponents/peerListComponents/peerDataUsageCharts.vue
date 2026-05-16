@@ -110,7 +110,7 @@ const peersDataUsageChartData = computed(() => {
 		}),
 		datasets: [{
 			label: 'Total Data Usage',
-			data: data.map(x => x.cumu_data + x.total_data),
+			data: data.map(x => (x.cumu_data + x.total_data) / (1024 ** 3)),
 			backgroundColor: data.map(x => `#ffc107`),
 			tooltip: {
 				callbacks: {
