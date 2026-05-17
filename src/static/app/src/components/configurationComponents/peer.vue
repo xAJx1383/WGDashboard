@@ -60,7 +60,11 @@ export default {
 				
 				
 				<div style="font-size: 0.8rem" class="ms-auto d-flex gap-2">
-					<span class="text-primary">
+					<span class="text-secondary" title="Total Usage">
+						<i class="bi bi-arrow-down-up"></i><strong>
+						{{formatBytes(Peer.cumu_data + Peer.total_data)}}</strong>
+					</span>
+					<span class="text-primary" title="Total Received">
 						<i class="bi bi-arrow-down"></i><strong>
 						{{formatBytes(Peer.cumu_receive + Peer.total_receive)}}</strong>
 					</span>

@@ -883,6 +883,25 @@ class WireguardConfiguration:
         
         data_usage = [p.split("\t") for p in data_usage]
         cur_i = None
+        
+        boot_time_file = os.path.join(self.DashboardConfig.GetConfig('Server', f"{self.Protocol}_conf_path")[1], f".boot_time_{self.Name}")
+        current_boot_time = psutil.boot_time()
+        is_reboot = False
+        last_boot_time = 0.0
+        if os.path.exists(boot_time_file):
+            try:
+                with open(boot_time_file, 'r') as f:
+                    last_boot_time = float(f.read().strip())
+            except Exception:
+                pass
+        if current_boot_time > last_boot_time + 5:
+            is_reboot = True
+            try:
+                with open(boot_time_file, 'w') as f:
+                    f.write(str(current_boot_time))
+            except Exception:
+                pass
+
         with self.engine.begin() as conn:
             for i in range(len(data_usage)):
                 if len(data_usage[i]) == 3:
@@ -903,11 +922,11 @@ class WireguardConfiguration:
                         
                         updates = {}
                         # Delta Pattern for Sent
-                        if cur_total_sent < total_sent:
+                        if is_reboot or cur_total_sent < total_sent:
                             updates["cumu_sent"] = cur_i['cumu_sent'] + total_sent
                         
                         # Delta Pattern for Receive
-                        if cur_total_receive < total_receive:
+                        if is_reboot or cur_total_receive < total_receive:
                             updates["cumu_receive"] = cur_i['cumu_receive'] + total_receive
                         
                         if updates:
@@ -967,6 +986,24 @@ class WireguardConfiguration:
             now = datetime.now()
             time_delta = timedelta(minutes=3)
             
+            boot_time_file = os.path.join(self.DashboardConfig.GetConfig('Server', f"{self.Protocol}_conf_path")[1], f".boot_time_{self.Name}")
+            current_boot_time = psutil.boot_time()
+            is_reboot = False
+            last_boot_time = 0.0
+            if os.path.exists(boot_time_file):
+                try:
+                    with open(boot_time_file, 'r') as f:
+                        last_boot_time = float(f.read().strip())
+                except Exception:
+                    pass
+            if current_boot_time > last_boot_time + 5:
+                is_reboot = True
+                try:
+                    with open(boot_time_file, 'w') as f:
+                        f.write(str(current_boot_time))
+                except Exception:
+                    pass
+
             with self.engine.begin() as conn:
                 for line in dump[1:]:
                     parts = line.split("\t")
@@ -998,10 +1035,10 @@ class WireguardConfiguration:
                             continue
                         
                         updates = {}
-                        if cur_total_sent < total_sent:
+                        if is_reboot or cur_total_sent < total_sent:
                             updates["cumu_sent"] = cur_i['cumu_sent'] + total_sent
                         
-                        if cur_total_receive < total_receive:
+                        if is_reboot or cur_total_receive < total_receive:
                             updates["cumu_receive"] = cur_i['cumu_receive'] + total_receive
 
                         if updates:

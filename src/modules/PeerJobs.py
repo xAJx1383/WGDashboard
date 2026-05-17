@@ -160,7 +160,7 @@ class PeerJobs:
                     if job.Field in ["total_receive", "total_sent", "total_data"]:
                         s = job.Field.split("_")[1]
                         x: float = getattr(fp, f"total_{s}") + getattr(fp, f"cumu_{s}")
-                        y: float = float(job.Value)
+                        y: float = float(job.Value) * (1024 ** 3)
                     else:
                         x: datetime = datetime.now()
                         y: datetime = datetime.strptime(job.Value, "%Y-%m-%d %H:%M:%S")
