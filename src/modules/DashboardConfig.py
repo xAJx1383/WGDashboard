@@ -30,6 +30,7 @@ class DashboardConfig:
             with open(DashboardConfig.ConfigurationFilePath, "r+") as f:
                 self.__config.read_file(f)
         self.hiddenAttribute = ["totp_key", "auth_req"]
+        app_port_default = "10086"
         self.__default = {
             "Account": {
                 "username": "admin",
@@ -43,7 +44,7 @@ class DashboardConfig:
                 "awg_conf_path": "/etc/amnezia/amneziawg",
                 "app_prefix": "",
                 "app_ip": "0.0.0.0",
-                "app_port": "10086",
+                "app_port": app_port_default,
                 "auth_req": "true",
                 "version": DashboardConfig.DashboardVersion,
                 "dashboard_refresh_interval": "60000",
@@ -94,7 +95,7 @@ class DashboardConfig:
             },
             "PeerPanel": {
                 "peer_panel_enable": "false",
-                "peer_panel_port": str(int(self.__default["Server"]["app_port"]) + 1),
+                "peer_panel_port": str(int(app_port_default) + 1),
                 "peer_panel_bind_address": "0.0.0.0"
             }
         }

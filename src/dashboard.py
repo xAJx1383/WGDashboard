@@ -228,8 +228,12 @@ _reload_interval = 5
 def _on_app_shutdown():
     _app_stop_event.set()
     flush_usage_on_shutdown()
-    if 'SystemStatus' in globals():
-        globals()['SystemStatus'].stop()
+    try:
+        from modules.SystemStatus import SystemStatus as SSClass
+        if 'SystemStatus' in globals() and not isinstance(globals()['SystemStatus'], type):
+            globals()['SystemStatus'].stop()
+    except Exception:
+        pass
 
 def flush_usage_on_shutdown():
     """
