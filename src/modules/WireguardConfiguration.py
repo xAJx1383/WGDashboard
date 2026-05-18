@@ -1413,27 +1413,38 @@ class WireguardConfiguration:
         return True, availableAddress
 
     def getRealtimeTrafficUsage(self):
+        import time
         stats = psutil.net_io_counters(pernic=True, nowrap=True)
         if self.Name in stats.keys():
             stat = stats[self.Name]
-            recv1 = stat.bytes_recv
-            sent1 = stat.bytes_sent
-            time.sleep(1)
-            stats = psutil.net_io_counters(pernic=True, nowrap=True)
-            if self.Name in stats.keys():
-                stat = stats[self.Name]
-                recv2 = stat.bytes_recv
-                sent2 = stat.bytes_sent
-                net_in = round((recv2 - recv1) / 1024 / 1024, 3)
-                net_out = round((sent2 - sent1) / 1024 / 1024, 3)
-                return {
-                    "sent": net_out,
-                    "recv": net_in
-                }
-            else:
-                return { "sent": 0, "recv": 0 }
+            recv_now = stat.bytes_recv
+            sent_now = stat.bytes_sent
+            now = time.time()
+            
+            if hasattr(self, '_last_traffic_stats'):
+                last_time, last_recv, last_sent = self._last_traffic_stats
+                time_delta = now - last_time
+                if time_delta > 0.2:  # Avoid division by zero/extremely small numbers
+                    net_in = round(((recv_now - last_recv) / time_delta) / 1024 / 1024, 3)
+                    net_out = round(((sent_now - last_sent) / time_delta) / 1024 / 1024, 3)
+                    # Don't allow negative values (e.g. if counter wrapped or reset)
+                    net_in = max(0.0, net_in)
+                    net_out = max(0.0, net_out)
+                    self._last_traffic_stats = (now, recv_now, sent_now)
+                    self._last_traffic_rate = {
+                        "sent": net_out,
+                        "recv": net_in
+                    }
+                    return self._last_traffic_rate
+                else:
+                    return getattr(self, '_last_traffic_rate', { "sent": 0.0, "recv": 0.0 })
+            
+            # First run initialization
+            self._last_traffic_stats = (now, recv_now, sent_now)
+            self._last_traffic_rate = { "sent": 0.0, "recv": 0.0 }
+            return self._last_traffic_rate
         else:
-            return { "sent": 0, "recv": 0 }
+            return { "sent": 0.0, "recv": 0.0 }
     
     '''
     Manager WireGuard Configuration Information
@@ -1551,8 +1562,10 @@ class WireguardConfiguration:
                     self.peersTransferTable.delete()
             )
             with self.engine.connect() as conn:
-                if conn.dialect.name == 'sqlite':
-                    print("[WGDashboard] SQLite Vacuuming Database")
+                is_sqlite = conn.dialect.name == 'sqlite'
+            if is_sqlite:
+                print("[WGDashboard] SQLite Vacuuming Database")
+                with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
                     conn.execute(sqlalchemy.text('VACUUM;'))
         except Exception as e:
             return False
@@ -1565,8 +1578,10 @@ class WireguardConfiguration:
                     self.peersHistoryEndpointTable.delete()
                 )
             with self.engine.connect() as conn:
-                if conn.dialect.name == 'sqlite':
-                    print("[WGDashboard] SQLite Vacuuming Database")
+                is_sqlite = conn.dialect.name == 'sqlite'
+            if is_sqlite:
+                print("[WGDashboard] SQLite Vacuuming Database")
+                with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
                     conn.execute(sqlalchemy.text('VACUUM;'))
         except Exception as e:
             return False

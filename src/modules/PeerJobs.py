@@ -126,7 +126,11 @@ class PeerJobs:
                 )
                 self.JobLogger.log(Job.JobID, Message=f"Job is removed due to being deleted or finished.")
             self.__getJobs()
-            self.WireguardConfigurations.get(Job.Configuration).searchPeer(Job.Peer)[1].getJobs()
+            config = self.WireguardConfigurations.get(Job.Configuration)
+            if config:
+                found, peer = config.searchPeer(Job.Peer)
+                if found and peer:
+                    peer.getJobs()
             return True, None
         except Exception as e:
             return False, str(e)
@@ -159,7 +163,16 @@ class PeerJobs:
                 if f:
                     if job.Field in ["total_receive", "total_sent", "total_data"]:
                         s = job.Field.split("_")[1]
-                        x: float = getattr(fp, f"total_{s}") + getattr(fp, f"cumu_{s}")
+                        # Fetch the absolute freshest peer traffic statistics directly from the database
+                        # to prevent stale in-memory cache race conditions.
+                        with c.engine.connect() as conn:
+                            db_peer = conn.execute(
+                                c.peersTable.select().where(c.peersTable.c.id == fp.id)
+                            ).mappings().fetchone()
+                        if db_peer:
+                            x: float = float(db_peer[f"total_{s}"] + db_peer[f"cumu_{s}"])
+                        else:
+                            x: float = getattr(fp, f"total_{s}") + getattr(fp, f"cumu_{s}")
                         y: float = float(job.Value) * (1024 ** 3)
                     else:
                         x: datetime = datetime.now()
@@ -228,11 +241,14 @@ class PeerJobs:
                 self.JobLogger.deleteLogs(JobID=job.get('JobID'))
                 self.JobLogger.log(job.get('JobID'), Message=f"Job is removed due to being stale.")
         
-        with self.engine.connect() as conn:
-            if init and conn.dialect.name == 'sqlite':
+        if init:
+            with self.engine.connect() as conn:
+                is_sqlite = conn.dialect.name == 'sqlite'
+            if is_sqlite:
                 print("[WGDashboard] SQLite Vacuuming PeerJobs Database")
                 self.JobLogger.vacuum()
-                conn.execute(sqlalchemy.text('VACUUM;'))
+                with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                    conn.execute(sqlalchemy.text('VACUUM;'))
 
     def __runJob_Compare(self, x: float | datetime, y: float | datetime, operator: str):
         if operator == "eq":

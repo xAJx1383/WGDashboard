@@ -94,7 +94,7 @@ class DashboardConfig:
             },
             "PeerPanel": {
                 "peer_panel_enable": "false",
-                "peer_panel_port": "10087",
+                "peer_panel_port": str(int(self.__default["Server"]["app_port"]) + 1),
                 "peer_panel_bind_address": "0.0.0.0"
             }
         }
@@ -189,6 +189,14 @@ class DashboardConfig:
         if section == "Server" and key == "wg_conf_path":
             if not os.path.exists(value):
                 return False, f"{value} is not a valid path"
+        if section == "PeerPanel" and key == "peer_panel_port":
+            _, app_port = self.GetConfig("Server", "app_port")
+            if str(value) == str(app_port):
+                return False, "Peer Panel port cannot be the same as the Dashboard port"
+        if section == "Server" and key == "app_port":
+            _, peer_port = self.GetConfig("PeerPanel", "peer_panel_port")
+            if peer_port and str(value) == str(peer_port):
+                return False, "Dashboard port cannot be the same as the Peer Panel port"
         if section == "Account" and key == "password":
             if self.GetConfig("Account", "password")[0]:
                 if not self.__checkPassword(

@@ -126,13 +126,13 @@ class CPU:
         
     def getCPUPercent(self):
         try:
-            self.cpu_percent = psutil.cpu_percent(interval=1)
+            self.cpu_percent = psutil.cpu_percent()
         except Exception as e:
             logger.error(f"Get CPU Percent error: {e}", exc_info=True)
     
     def getPerCPUPercent(self):
         try:
-            self.cpu_percent_per_cpu = psutil.cpu_percent(interval=1, percpu=True)
+            self.cpu_percent_per_cpu = psutil.cpu_percent(percpu=True)
         except Exception as e:
             logger.error(f"Get Per CPU Percent error: {e}", exc_info=True)
     
@@ -207,6 +207,8 @@ class Disk:
 class NetworkInterfaces:
     def __init__(self):
         self.interfaces = {}
+        self._last_network = None
+        self._last_time = None
         
     def getInterfacePriorities(self):
         if shutil.which("ip"):
@@ -230,16 +232,25 @@ class NetworkInterfaces:
         new_interfaces = {}
         try:
             network = psutil.net_io_counters(pernic=True, nowrap=True)
+            now = time.time()
             for i in network.keys():
                 new_interfaces[i] = network[i]._asdict()
-            time.sleep(1)
-            network = psutil.net_io_counters(pernic=True, nowrap=True)
-            for i in network.keys():
-                if i in new_interfaces:
-                    new_interfaces[i]['realtime'] = {
-                        'sent': round((network[i].bytes_sent - new_interfaces[i]['bytes_sent']) / 1024 / 1024, 4),
-                        'recv': round((network[i].bytes_recv - new_interfaces[i]['bytes_recv']) / 1024 / 1024, 4)
-                    }
+                new_interfaces[i]['realtime'] = { 'sent': 0.0, 'recv': 0.0 }
+            
+            if self._last_network is not None and self._last_time is not None:
+                time_delta = now - self._last_time
+                if time_delta > 0.5:
+                    for i in network.keys():
+                        if i in self._last_network and i in new_interfaces:
+                            sent_diff = network[i].bytes_sent - self._last_network[i].bytes_sent
+                            recv_diff = network[i].bytes_recv - self._last_network[i].bytes_recv
+                            new_interfaces[i]['realtime'] = {
+                                'sent': round((sent_diff / time_delta) / 1024 / 1024, 4),
+                                'recv': round((recv_diff / time_delta) / 1024 / 1024, 4)
+                            }
+            
+            self._last_network = network
+            self._last_time = now
             self.interfaces = new_interfaces
         except Exception as e:
             logger.error(f"Get network error: {e}", exc_info=True)
