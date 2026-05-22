@@ -89,15 +89,13 @@ def test_atomic_peer_management(monkeypatch):
     from modules.WireguardCLI import WireguardCLI
     from modules.Utilities import GenerateWireguardPrivateKey, GenerateWireguardPublicKey
     
-    # Generate valid keys
-    status, private_key = GenerateWireguardPrivateKey()
-    status, real_public_key = GenerateWireguardPublicKey(private_key)
-    
     commands_run = []
     def mock_run(cmd, timeout=10, input=None):
         commands_run.append(" ".join(cmd))
+        if "genkey" in cmd:
+            return b"mock_private_key\n"
         if "pubkey" in cmd:
-            return real_public_key.encode()
+            return b"mock_public_key\n"
         if "set" in cmd:
             return b""
         if "save" in cmd:
@@ -105,6 +103,10 @@ def test_atomic_peer_management(monkeypatch):
         return b""
 
     monkeypatch.setattr(WireguardCLI, "run", mock_run)
+
+    # Generate valid keys
+    status, private_key = GenerateWireguardPrivateKey()
+    status, real_public_key = GenerateWireguardPublicKey(private_key)
     
     # Mock Configuration
     mock_config = MagicMock()

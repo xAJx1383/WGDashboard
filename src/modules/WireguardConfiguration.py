@@ -1005,6 +1005,10 @@ class WireguardConfiguration:
                     pass
 
             with self.engine.begin() as conn:
+                # Fetch all existing peers in one query
+                all_peers = conn.execute(self.peersTable.select()).mappings().fetchall()
+                peers_by_id = {peer['id']: peer for peer in all_peers}
+
                 for line in dump[1:]:
                     parts = line.split("\t")
                     if len(parts) < 8:
@@ -1020,10 +1024,7 @@ class WireguardConfiguration:
                     status = "running" if minus < time_delta else "stopped"
                     handshake_str = str(minus).split(".", maxsplit=1)[0] if latest_handshake_ts > 0 else "No Handshake"
 
-                    cur_i = conn.execute(
-                        self.peersTable.select().where(self.peersTable.c.id == peer_id)
-                    ).mappings().fetchone()
-                    
+                    cur_i = peers_by_id.get(peer_id)
                     if cur_i:
                         total_sent = cur_i['total_sent']
                         total_receive = cur_i['total_receive']
@@ -1034,31 +1035,34 @@ class WireguardConfiguration:
                         except (ValueError, TypeError):
                             continue
                         
-                        updates = {}
+                        updates = {
+                            "latest_handshake": handshake_str,
+                            "status": status,
+                            "endpoint": endpoint,
+                            "total_receive": cur_total_receive,
+                            "total_sent": cur_total_sent,
+                            "total_data": cur_total_receive + cur_total_sent
+                        }
+                        
+                        cumu_updated = False
+                        cumu_sent = cur_i['cumu_sent']
+                        cumu_receive = cur_i['cumu_receive']
+                        
                         if is_reboot or cur_total_sent < total_sent:
-                            updates["cumu_sent"] = cur_i['cumu_sent'] + total_sent
+                            cumu_sent += total_sent
+                            updates["cumu_sent"] = cumu_sent
+                            cumu_updated = True
                         
                         if is_reboot or cur_total_receive < total_receive:
-                            updates["cumu_receive"] = cur_i['cumu_receive'] + total_receive
+                            cumu_receive += total_receive
+                            updates["cumu_receive"] = cumu_receive
+                            cumu_updated = True
 
-                        if updates:
-                            updates["cumu_data"] = (updates.get("cumu_sent", cur_i['cumu_sent']) + 
-                                                   updates.get("cumu_receive", cur_i['cumu_receive']))
-                            conn.execute(
-                                self.peersTable.update().values(updates).where(
-                                    self.peersTable.c.id == peer_id
-                                )
-                            )
+                        if cumu_updated:
+                            updates["cumu_data"] = cumu_sent + cumu_receive
 
                         conn.execute(
-                            self.peersTable.update().values({
-                                "latest_handshake": handshake_str,
-                                "status": status,
-                                "endpoint": endpoint,
-                                "total_receive": cur_total_receive,
-                                "total_sent": cur_total_sent,
-                                "total_data": cur_total_receive + cur_total_sent
-                            }).where(
+                            self.peersTable.update().values(updates).where(
                                 self.peersTable.c.id == peer_id
                             )
                         )

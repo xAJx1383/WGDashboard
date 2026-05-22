@@ -1530,7 +1530,8 @@ def API_Welcome_Finish():
 
 class Locale:
     def __init__(self):
-        self.localePath = './static/locales/'
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.localePath = os.path.join(base_dir, 'static', 'locales') + os.sep
         self.activeLanguages = {}
         with open(os.path.join(f"{self.localePath}supported_locales.json"), "r") as f:
             self.activeLanguages = sorted(json.loads(''.join(f.readlines())), key=lambda x : x['lang_name'])

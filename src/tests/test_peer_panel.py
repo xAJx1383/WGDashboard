@@ -35,16 +35,16 @@ def test_ip_identification():
     }
 
     # Test 1: Exact IPv4 match
-    assert get_peer_by_ip("10.0.0.2", configurations) == peer1
+    assert get_peer_by_ip("10.0.0.2", configurations) == (peer1, "wg0")
 
     # Test 2: IPv6 match in multiple allowed IPs
-    assert get_peer_by_ip("fd00::2", configurations) == peer2
+    assert get_peer_by_ip("fd00::2", configurations) == (peer2, "wg0")
 
     # Test 3: No match
-    assert get_peer_by_ip("10.0.0.5", configurations) is None
+    assert get_peer_by_ip("10.0.0.5", configurations) == (None, None)
 
     # Test 4: Should not match peer in inactive configuration
-    assert get_peer_by_ip("10.0.0.4", configurations) is None
+    assert get_peer_by_ip("10.0.0.4", configurations) == (None, None)
 
 def test_blueprint_isolation():
     app = Flask(__name__)
@@ -85,6 +85,10 @@ def test_usage_route():
     peer1.status = "running"
     peer1.latest_handshake = "2 minutes ago"
     peer1.configuration.Name = "wg0"
+    peer1.endpoint = "1.2.3.4:51820"
+    peer1.restricted = False
+    peer1.cumu_receive = 0
+    peer1.cumu_sent = 0
     
     conf1 = MagicMock()
     conf1.getStatus.return_value = True
@@ -93,14 +97,15 @@ def test_usage_route():
     app.config['WGD'] = {"wg0": conf1}
     
     with app.test_client() as client:
-        response = client.get('/peer/usage', environ_overrides={'REMOTE_ADDR': '10.0.0.2'})
+        response = client.get('/peer/api/status', environ_overrides={'REMOTE_ADDR': '10.0.0.2'})
         assert response.status_code == 200
-        # Check if some key content is present in the rendered HTML
-        html = response.get_data(as_text=True)
-        assert "Test Peer" in html
-        assert "peer1_pubkey" in html
-        assert "1.0 KB" in html # 1024 bytes
-        assert "2.0 KB" in html # 2048 bytes
+        data = response.get_json()
+        assert data["status"] is True
+        peer_data = data["data"]["peer"]
+        assert peer_data["name"] == "Test Peer"
+        assert peer_data["id"] == "peer1_pubkey"
+        assert peer_data["total_receive_formatted"] == "1.0 KB"
+        assert peer_data["total_sent_formatted"] == "2.0 KB"
 
 def test_secondary_port_service():
     # Mocking necessary components to test startPeerPanelThread

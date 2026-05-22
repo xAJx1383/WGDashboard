@@ -5,9 +5,14 @@ from sqlalchemy import event
 from sqlalchemy_utils import database_exists, create_database
 from flask import current_app
 
+_connection_string_cache = {}
 _engine_cache = {}
 
 def ConnectionString(database) -> str:
+    global _connection_string_cache
+    if database in _connection_string_cache:
+        return _connection_string_cache[database]
+
     parser = configparser.ConfigParser(strict=False)
     # Use context manager for reading config
     with open('wg-dashboard.ini', "r") as f:
@@ -15,10 +20,15 @@ def ConnectionString(database) -> str:
     sqlitePath = os.path.join("db")
     if not os.path.isdir(sqlitePath):
         os.mkdir(sqlitePath)
-    if parser.get("Database", "type") == "postgresql":
-        cn = f'postgresql+psycopg://{parser.get("Database", "username")}:{parser.get("Database", "password")}@{parser.get("Database", "host")}/{database}'
-    elif parser.get("Database", "type") == "mysql":
-        cn = f'mysql+pymysql://{parser.get("Database", "username")}:{parser.get("Database", "password")}@{parser.get("Database", "host")}/{database}'
+
+    db_type = None
+    if parser.has_section("Database") and parser.has_option("Database", "type"):
+        db_type = parser.get("Database", "type")
+
+    if db_type == "postgresql":
+        cn = f'postgresql+psycopg://{parser.get("Database", "username", fallback="")}:{parser.get("Database", "password", fallback="")}@{parser.get("Database", "host", fallback="")}/{database}'
+    elif db_type == "mysql":
+        cn = f'mysql+pymysql://{parser.get("Database", "username", fallback="")}:{parser.get("Database", "password", fallback="")}@{parser.get("Database", "host", fallback="")}/{database}'
     else:
         cn = f'sqlite:///{os.path.join(sqlitePath, f"{database}.db")}'
     try:
@@ -29,6 +39,7 @@ def ConnectionString(database) -> str:
             current_app.logger.error("Database error. Terminating...", exc_info=e)
         exit(1)
         
+    _connection_string_cache[database] = cn
     return cn
 
 def CreateEngine(connection_string, **kwargs) -> db.Engine:
