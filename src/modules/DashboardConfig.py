@@ -56,11 +56,11 @@ class DashboardConfig:
                 "secret_key": secrets.token_urlsafe(32)
             },
             "Peers": {
-                "peer_global_DNS": "1.1.1.1",
-                "peer_endpoint_allowed_ip": "0.0.0.0/0",
+                "peer_global_DNS": "10.7.0.0,fd86:ea04:1111::",
+                "peer_endpoint_allowed_ip": "0.0.0.0/0, ::/0",
                 "peer_display_mode": "grid",
                 "remote_endpoint": GetRemoteEndpoint(),
-                "peer_MTU": "1420",
+                "peer_MTU": "1328",
                 "peer_keep_alive": "21"
             },
             "Other": {

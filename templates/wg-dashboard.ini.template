@@ -1,9 +1,9 @@
 [Peers]
 remote_endpoint = <your-public-ip>
-peer_global_dns = <your-chosen-dns>
-peer_endpoint_allowed_ip = 0.0.0.0/0
+peer_global_dns = 10.7.0.0,fd86:ea04:1111::
+peer_endpoint_allowed_ip = 0.0.0.0/0, ::/0
 peer_display_mode = grid
-peer_mtu = 1420
+peer_mtu = 1328
 peer_keep_alive = 21
 
 [Server]
